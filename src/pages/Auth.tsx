@@ -83,7 +83,10 @@ const Auth = () => {
 
         {/* Submit */}
         <button
-          onClick={() => navigate("/")}
+          onClick={() => {
+            localStorage.setItem("reseepe_onboarded", "true");
+            navigate("/home", { replace: true });
+          }}
           className="w-full mt-6 bg-primary text-primary-foreground py-3.5 rounded-2xl font-semibold text-sm shadow-lg shadow-primary/25 active:scale-[0.98] transition-transform"
         >
           {isLogin ? "Sign In" : "Create Account"}
