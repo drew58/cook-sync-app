@@ -3,8 +3,18 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import BottomNav from "@/components/BottomNav";
+import Index from "./pages/Index";
+import Onboarding from "./pages/Onboarding";
+import Auth from "./pages/Auth";
+import HomeFeed from "./pages/HomeFeed";
+import SearchPage from "./pages/SearchPage";
+import RecipeDetail from "./pages/RecipeDetail";
+import ProfilePage from "./pages/ProfilePage";
+import CreatorProfile from "./pages/CreatorProfile";
+import SubscriptionsPage from "./pages/SubscriptionsPage";
+import CreatePage from "./pages/CreatePage";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -14,11 +24,22 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <div className="max-w-lg mx-auto min-h-screen relative bg-background shadow-2xl">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/home" element={<HomeFeed />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/recipe/:id" element={<RecipeDetail />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/creator/:id" element={<CreatorProfile />} />
+            <Route path="/subscriptions" element={<SubscriptionsPage />} />
+            <Route path="/create" element={<CreatePage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <BottomNav />
+        </div>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
