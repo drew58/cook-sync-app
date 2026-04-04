@@ -7,6 +7,7 @@ interface VideoCardProps {
   creator: string;
   likes: string;
   tags: string[];
+  avatar?: string;
   onClick?: () => void;
 }
 
@@ -16,7 +17,7 @@ const tagStyles: Record<string, string> = {
   "Few ingredients": "tag-few-ingredients",
 };
 
-const VideoCard = ({ image, title, creator, likes, tags, onClick }: VideoCardProps) => {
+const VideoCard = ({ image, title, creator, likes, tags, avatar, onClick }: VideoCardProps) => {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -42,6 +43,17 @@ const VideoCard = ({ image, title, creator, likes, tags, onClick }: VideoCardPro
           </span>
         ))}
       </div>
+
+      {/* Creator avatar - top right corner */}
+      {avatar && (
+        <div className="absolute top-4 right-4">
+          <img
+            src={avatar}
+            alt={creator}
+            className="w-10 h-10 rounded-full object-cover border-2 border-primary-foreground/80 shadow-lg"
+          />
+        </div>
+      )}
 
       {/* Right actions */}
       <div className="absolute right-3 bottom-24 flex flex-col gap-5">

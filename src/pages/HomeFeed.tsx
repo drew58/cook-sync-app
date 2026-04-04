@@ -8,10 +8,10 @@ import food3 from "@/assets/food-3.jpg";
 import food4 from "@/assets/food-4.jpg";
 
 const feedItems = [
-  { image: food1, title: "Smoky Jollof Rice with Grilled Chicken", creator: "chef_ada", likes: "2.4k", tags: ["Low cost", "Quick meal"] },
-  { image: food2, title: "Classic Pasta Carbonara", creator: "marco_cooks", likes: "5.1k", tags: ["Few ingredients"] },
-  { image: food3, title: "Fresh Salmon Poke Bowl", creator: "yuki_eats", likes: "3.8k", tags: ["Quick meal"] },
-  { image: food4, title: "Chocolate Lava Cake", creator: "sweet_amara", likes: "8.2k", tags: ["Low cost", "Few ingredients"] },
+  { image: food1, title: "Smoky Jollof Rice with Grilled Chicken", creator: "chef_ada", likes: "2.4k", tags: ["Low cost", "Quick meal"], avatar: food1 },
+  { image: food2, title: "Classic Pasta Carbonara", creator: "marco_cooks", likes: "5.1k", tags: ["Few ingredients"], avatar: food2 },
+  { image: food3, title: "Fresh Salmon Poke Bowl", creator: "yuki_eats", likes: "3.8k", tags: ["Quick meal"], avatar: food3 },
+  { image: food4, title: "Chocolate Lava Cake", creator: "sweet_amara", likes: "8.2k", tags: ["Low cost", "Few ingredients"], avatar: food4 },
 ];
 
 const HomeFeed = () => {
@@ -22,7 +22,15 @@ const HomeFeed = () => {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-xl px-4 pt-12 pb-2">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-2xl font-bold font-display text-gradient">RESEEPE</h1>
+          <h1 className="text-2xl font-bold font-display">
+            <span className="text-primary">R</span>
+            <span className="text-primary">E</span>
+            <span className="text-primary">S</span>
+            <span className="text-[hsl(142,50%,45%)]">E</span>
+            <span className="text-[hsl(142,50%,45%)]">E</span>
+            <span className="text-primary">P</span>
+            <span className="text-primary">E</span>
+          </h1>
           <button className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center" onClick={() => navigate("/search")}>
             <Search className="w-4 h-4 text-foreground" />
           </button>
