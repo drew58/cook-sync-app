@@ -27,6 +27,7 @@ const App = () => (
         <div className="max-w-lg mx-auto min-h-screen relative bg-background shadow-2xl">
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/index" element={<Index />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/home" element={<HomeFeed />} />
