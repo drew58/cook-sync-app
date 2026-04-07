@@ -1,18 +1,57 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChefHat, User, Eye, EyeOff } from "lucide-react";
+import { ChefHat, User, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<"user" | "creator" | null>(null);
+  const [role, setRole] = useState<"user" | "creator">("user");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signUp, signIn } = useAuth();
+
+  const handleSubmit = async () => {
+    if (!email || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    if (!isLogin && !displayName) {
+      toast.error("Please enter your name");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast.error(error.message);
+        } else {
+          localStorage.setItem("reseepe_onboarded", "true");
+          navigate("/home", { replace: true });
+        }
+      } else {
+        const { error } = await signUp(email, password, displayName, role);
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Check your email to verify your account!");
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col px-6 pt-14 pb-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex-1">
-        {/* Logo */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold font-display text-gradient">RESEEPE</h1>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -20,7 +59,6 @@ const Auth = () => {
           </p>
         </div>
 
-        {/* Role Selection (signup only) */}
         {!isLogin && (
           <div className="flex gap-3 mb-6">
             <button
@@ -48,24 +86,29 @@ const Auth = () => {
           </div>
         )}
 
-        {/* Form */}
         <div className="space-y-4">
           {!isLogin && (
             <input
               type="text"
               placeholder="Full name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
               className="w-full px-4 py-3.5 rounded-xl bg-secondary border-0 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           )}
           <input
             type="email"
             placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3.5 rounded-xl bg-secondary border-0 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3.5 rounded-xl bg-secondary border-0 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 pr-12"
             />
             <button
@@ -81,25 +124,21 @@ const Auth = () => {
           <button className="text-primary text-sm font-medium mt-3 block ml-auto">Forgot password?</button>
         )}
 
-        {/* Submit */}
         <button
-          onClick={() => {
-            localStorage.setItem("reseepe_onboarded", "true");
-            navigate("/home", { replace: true });
-          }}
-          className="w-full mt-6 bg-primary text-primary-foreground py-3.5 rounded-2xl font-semibold text-sm shadow-lg shadow-primary/25 active:scale-[0.98] transition-transform"
+          onClick={handleSubmit}
+          disabled={isLoading}
+          className="w-full mt-6 bg-primary text-primary-foreground py-3.5 rounded-2xl font-semibold text-sm shadow-lg shadow-primary/25 active:scale-[0.98] transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
         >
+          {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
           {isLogin ? "Sign In" : "Create Account"}
         </button>
 
-        {/* Divider */}
         <div className="flex items-center gap-4 my-6">
           <div className="flex-1 h-px bg-border" />
           <span className="text-muted-foreground text-xs">or continue with</span>
           <div className="flex-1 h-px bg-border" />
         </div>
 
-        {/* Social */}
         <div className="flex gap-3">
           <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-card border border-border text-sm font-medium text-foreground hover:bg-secondary transition-colors">
             <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="#EA4335" d="M5.27 9.76A7.5 7.5 0 0 1 12 4.5c1.77 0 3.37.61 4.63 1.63l3.45-3.45A12.5 12.5 0 0 0 12 0 12 12 0 0 0 1.24 6.65l4.03 3.11Z"/><path fill="#34A853" d="M16.04 18.01A7.4 7.4 0 0 1 12 19.5a7.5 7.5 0 0 1-6.73-4.24l-4.03 3.11A12 12 0 0 0 12 24a11.5 11.5 0 0 0 7.84-3l-3.8-2.99Z"/><path fill="#4A90D9" d="M19.84 21a11.7 11.7 0 0 0 3.66-8.5c0-.83-.08-1.64-.24-2.5H12v5h4.34a5.2 5.2 0 0 1-2.3 2.99l3.8 3.01Z"/><path fill="#FBBC05" d="M5.27 15.26A7.5 7.5 0 0 1 4.5 12c0-1.14.27-2.21.77-3.24L1.24 5.65A12 12 0 0 0 0 12c0 2.17.56 4.22 1.57 6l3.7-2.74Z"/></svg>
@@ -111,7 +150,6 @@ const Auth = () => {
           </button>
         </div>
 
-        {/* Toggle */}
         <p className="text-center text-sm text-muted-foreground mt-8">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
           <button onClick={() => setIsLogin(!isLogin)} className="text-primary font-semibold">
