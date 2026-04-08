@@ -2,7 +2,7 @@ import { Home, Search, PlusCircle, Users, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const tabs = [
-  { icon: Home, label: "Home", path: "/" },
+  { icon: Home, label: "Home", path: "/home" },
   { icon: Search, label: "Search", path: "/search" },
   { icon: PlusCircle, label: "Create", path: "/create" },
   { icon: Users, label: "Subs", path: "/subscriptions" },
@@ -14,13 +14,13 @@ const BottomNav = () => {
   const navigate = useNavigate();
 
   // Hide on onboarding
-  if (location.pathname === "/onboarding" || location.pathname === "/auth") return null;
+  if (location.pathname === "/" || location.pathname === "/index" || location.pathname === "/onboarding" || location.pathname === "/auth") return null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50 pb-safe">
       <div className="flex items-center justify-around max-w-lg mx-auto py-2">
         {tabs.map((tab) => {
-          const isActive = location.pathname === tab.path || (tab.path === "/" && location.pathname === "/home");
+          const isActive = location.pathname === tab.path;
           const isCreate = tab.label === "Create";
           return (
             <button
