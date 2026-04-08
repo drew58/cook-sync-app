@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Crown, Check, Play, Lock, ChevronRight, X } from "lucide-react";
+import { Crown, Check, Play, Lock, ChevronRight, X, BadgeCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import food1 from "@/assets/food-1.jpg";
 import food2 from "@/assets/food-2.jpg";
@@ -10,23 +10,29 @@ import food5 from "@/assets/food-5.jpg";
 import food6 from "@/assets/food-6.jpg";
 
 const creators = [
-  { name: "Chef Ada", handle: "@chef_ada", avatar: food1, followers: "12.4k", videos: 48, subscribed: false },
-  { name: "Marco Cooks", handle: "@marco_cooks", avatar: food2, followers: "8.1k", videos: 35, subscribed: true },
-  { name: "Yuki Eats", handle: "@yuki_eats", avatar: food3, followers: "22k", videos: 92, subscribed: false },
-  { name: "Sweet Amara", handle: "@sweet_amara", avatar: food4, followers: "5.6k", videos: 21, subscribed: false },
+  { name: "Chef Ada", handle: "@chef_ada", avatar: food1, followers: "12.4k", videos: 48, subscribed: false, verified: true },
+  { name: "Marco Cooks", handle: "@marco_cooks", avatar: food2, followers: "8.1k", videos: 35, subscribed: true, verified: true },
+  { name: "Yuki Eats", handle: "@yuki_eats", avatar: food3, followers: "22k", videos: 92, subscribed: false, verified: true },
+  { name: "Sweet Amara", handle: "@sweet_amara", avatar: food4, followers: "5.6k", videos: 21, subscribed: false, verified: false },
 ];
 
-const freeContent = [
-  { image: food1, title: "Quick Jollof Rice", creator: "Chef Ada", views: "4.2k", isLocked: false },
-  { image: food5, title: "Easy Street Tacos", creator: "Carlos", views: "2.8k", isLocked: false },
-  { image: food3, title: "Poke Bowl Basics", creator: "Yuki", views: "6.1k", isLocked: false },
-  { image: food6, title: "Morning Smoothie", creator: "Priya", views: "3.5k", isLocked: false },
+const upcomingCreators = [
+  { name: "Carlos Kitchen", handle: "@carlos_k", avatar: food5, followers: "1.2k", videos: 8, verified: false },
+  { name: "Priya Spices", handle: "@priya_sp", avatar: food6, followers: "3.8k", videos: 15, verified: true },
+];
+
+// These represent cooking videos (people cooking, not just food)
+const cookingContent = [
+  { image: food1, title: "Chef Ada making Jollof Rice Live", creator: "Chef Ada", views: "4.2k", isLocked: false },
+  { image: food5, title: "Carlos prepping Street Tacos", creator: "Carlos", views: "2.8k", isLocked: false },
+  { image: food3, title: "Yuki's sushi rolling session", creator: "Yuki", views: "6.1k", isLocked: false },
+  { image: food6, title: "Priya's spice mixing tutorial", creator: "Priya", views: "3.5k", isLocked: false },
 ];
 
 const premiumContent = [
-  { image: food2, title: "Secret Carbonara Technique", creator: "Marco", views: "1.2k", isLocked: true },
-  { image: food4, title: "Lava Cake Masterclass", creator: "Amara", views: "890", isLocked: true },
-  { image: food1, title: "Advanced Jollof Variations", creator: "Chef Ada", views: "2.1k", isLocked: true },
+  { image: food2, title: "Marco's Secret Carbonara Technique", creator: "Marco", views: "1.2k", isLocked: true },
+  { image: food4, title: "Amara's Lava Cake Masterclass", creator: "Amara", views: "890", isLocked: true },
+  { image: food1, title: "Chef Ada's Advanced Jollof Class", creator: "Chef Ada", views: "2.1k", isLocked: true },
 ];
 
 const plans = [
@@ -92,7 +98,7 @@ const SubscriptionsPage = () => {
 
       {tab === "discover" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          {/* Creators to subscribe */}
+          {/* Popular Creators with verification */}
           <h2 className="text-sm font-bold text-foreground mb-3">Popular Creators</h2>
           <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide mb-4">
             {creators.map((c) => (
@@ -102,14 +108,15 @@ const SubscriptionsPage = () => {
                 onClick={() => navigate("/creator/1")}
               >
                 <img src={c.avatar} alt={c.name} className="w-14 h-14 rounded-full object-cover mb-2 border-2 border-primary/30" />
-                <h3 className="text-xs font-bold text-foreground truncate w-full">{c.name}</h3>
+                <div className="flex items-center gap-1">
+                  <h3 className="text-xs font-bold text-foreground truncate">{c.name}</h3>
+                  {c.verified && <BadgeCheck className="w-3.5 h-3.5 text-primary fill-primary/20 flex-shrink-0" />}
+                </div>
                 <p className="text-[10px] text-muted-foreground">{c.followers} followers</p>
                 <button
                   onClick={(e) => e.stopPropagation()}
                   className={`mt-2 w-full py-1.5 rounded-xl text-[10px] font-semibold transition-all ${
-                    c.subscribed
-                      ? "bg-secondary text-muted-foreground"
-                      : "bg-primary text-primary-foreground"
+                    c.subscribed ? "bg-secondary text-muted-foreground" : "bg-primary text-primary-foreground"
                   }`}
                 >
                   {c.subscribed ? "Subscribed" : "Subscribe"}
@@ -118,10 +125,35 @@ const SubscriptionsPage = () => {
             ))}
           </div>
 
-          {/* Free content reels */}
-          <h2 className="text-sm font-bold text-foreground mb-3">Free Content</h2>
+          {/* Upcoming Creators */}
+          <h2 className="text-sm font-bold text-foreground mb-3">Upcoming Creators</h2>
+          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide mb-4">
+            {upcomingCreators.map((c) => (
+              <div
+                key={c.handle}
+                className="flex-shrink-0 w-36 glass-card p-3 flex flex-col items-center text-center cursor-pointer"
+                onClick={() => navigate("/creator/1")}
+              >
+                <img src={c.avatar} alt={c.name} className="w-14 h-14 rounded-full object-cover mb-2 border-2 border-secondary" />
+                <div className="flex items-center gap-1">
+                  <h3 className="text-xs font-bold text-foreground truncate">{c.name}</h3>
+                  {c.verified && <BadgeCheck className="w-3.5 h-3.5 text-primary fill-primary/20 flex-shrink-0" />}
+                </div>
+                <p className="text-[10px] text-muted-foreground">{c.followers} followers</p>
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-2 w-full py-1.5 rounded-xl text-[10px] font-semibold bg-primary text-primary-foreground"
+                >
+                  Subscribe
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Cooking content (people cooking, not just food) */}
+          <h2 className="text-sm font-bold text-foreground mb-3">Creators Cooking</h2>
           <div className="grid grid-cols-2 gap-2 mb-6">
-            {freeContent.map((v, i) => (
+            {cookingContent.map((v, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -186,7 +218,10 @@ const SubscriptionsPage = () => {
               <div key={c.handle} className="glass-card p-4 flex items-center gap-3 mb-3 cursor-pointer" onClick={() => navigate("/creator/1")}>
                 <img src={c.avatar} alt={c.name} className="w-12 h-12 rounded-full object-cover border-2 border-primary/30" />
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-sm text-foreground">{c.name}</h3>
+                  <div className="flex items-center gap-1">
+                    <h3 className="font-bold text-sm text-foreground">{c.name}</h3>
+                    {c.verified && <BadgeCheck className="w-3.5 h-3.5 text-primary fill-primary/20" />}
+                  </div>
                   <p className="text-xs text-muted-foreground">{c.videos} videos · {c.followers} followers</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -222,7 +257,7 @@ const SubscriptionsPage = () => {
               </div>
 
               <div className="space-y-3">
-                {plans.map((plan, i) => (
+                {plans.map((plan) => (
                   <div
                     key={plan.name}
                     className={`p-4 rounded-2xl border transition-all ${
@@ -244,9 +279,7 @@ const SubscriptionsPage = () => {
                       </div>
                       <button
                         className={`px-4 py-2 rounded-xl text-xs font-semibold ${
-                          plan.current
-                            ? "bg-secondary text-muted-foreground"
-                            : "bg-primary text-primary-foreground"
+                          plan.current ? "bg-secondary text-muted-foreground" : "bg-primary text-primary-foreground"
                         }`}
                       >
                         {plan.current ? "Current" : "Select"}

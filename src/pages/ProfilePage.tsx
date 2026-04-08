@@ -1,5 +1,6 @@
-import { Settings, Bookmark, Heart, Users, ChevronRight } from "lucide-react";
+import { Settings, Bookmark, Users, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import food1 from "@/assets/food-1.jpg";
 import food2 from "@/assets/food-2.jpg";
 import food3 from "@/assets/food-3.jpg";
@@ -9,19 +10,25 @@ const savedRecipes = [food1, food2, food3, food5];
 
 const menuItems = [
   { icon: Bookmark, label: "Saved Recipes", count: 24 },
-  { icon: Heart, label: "Liked Videos", count: 156 },
   { icon: Users, label: "Subscriptions", count: 8 },
 ];
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const displayName = user?.user_metadata?.display_name || "User";
+  const initials = displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
     <div className="min-h-screen bg-background pb-24 pt-12 px-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold font-display text-foreground">Profile</h1>
-        <button className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
+        <button
+          onClick={() => navigate("/settings")}
+          className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center"
+        >
           <Settings className="w-4 h-4 text-foreground" />
         </button>
       </div>
@@ -29,13 +36,16 @@ const ProfilePage = () => {
       {/* Profile card */}
       <div className="glass-card p-5 flex items-center gap-4 mb-6">
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground text-xl font-bold">
-          AJ
+          {initials}
         </div>
         <div className="flex-1">
-          <h2 className="font-bold text-foreground">Adaeze Johnson</h2>
-          <p className="text-sm text-muted-foreground">@ada_cooks • Food Lover</p>
+          <h2 className="font-bold text-foreground">{displayName}</h2>
+          <p className="text-sm text-muted-foreground">@{user?.email?.split("@")[0] || "user"} • Food Lover</p>
         </div>
-        <button className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold">
+        <button
+          onClick={() => navigate("/profile/edit")}
+          className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
+        >
           Edit
         </button>
       </div>
@@ -54,10 +64,16 @@ const ProfilePage = () => {
         ))}
       </div>
 
-      {/* Menu */}
+      {/* Menu - removed Liked Videos */}
       <div className="space-y-2 mb-6">
         {menuItems.map((item) => (
-          <button key={item.label} className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform">
+          <button
+            key={item.label}
+            onClick={() => {
+              if (item.label === "Subscriptions") navigate("/subscriptions");
+            }}
+            className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
+          >
             <div className="w-10 h-10 rounded-xl bg-light-orange flex items-center justify-center">
               <item.icon className="w-5 h-5 text-primary" />
             </div>
