@@ -1,4 +1,4 @@
-import { ArrowLeft, Star } from "lucide-react";
+import { ArrowLeft, Star, BadgeCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import food1 from "@/assets/food-1.jpg";
 import food2 from "@/assets/food-2.jpg";
@@ -30,7 +30,10 @@ const CreatorProfile = () => {
             <img src={food1} alt="Chef Ada" className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 pb-1">
-            <h1 className="font-bold text-lg text-foreground">Chef Ada</h1>
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-bold text-lg text-foreground">Chef Ada</h1>
+              <BadgeCheck className="w-5 h-5 text-primary fill-primary/20" />
+            </div>
             <p className="text-sm text-muted-foreground">Nigerian Cuisine Expert</p>
           </div>
         </div>
@@ -42,7 +45,7 @@ const CreatorProfile = () => {
           <div className="flex items-center gap-1"><Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /><span className="font-bold text-foreground">4.9</span></div>
         </div>
 
-        {/* Actions */}
+        {/* Actions - Creator has Subscribe + Message */}
         <div className="flex gap-3 mb-6">
           <button className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/25">
             Subscribe
@@ -56,6 +59,18 @@ const CreatorProfile = () => {
         <p className="text-sm text-muted-foreground leading-relaxed mb-6">
           Passionate about making Nigerian food accessible to everyone. 🔥 10+ years of cooking experience. New recipes every week!
         </p>
+
+        {/* Creator stats cards */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="glass-card p-3 text-center">
+            <p className="text-xl font-bold text-primary">1.2M</p>
+            <p className="text-[10px] text-muted-foreground">Total Views</p>
+          </div>
+          <div className="glass-card p-3 text-center">
+            <p className="text-xl font-bold text-primary">98%</p>
+            <p className="text-[10px] text-muted-foreground">Approval</p>
+          </div>
+        </div>
 
         {/* Videos grid */}
         <h3 className="font-bold text-foreground mb-3">Recipes</h3>

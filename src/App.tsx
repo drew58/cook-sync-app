@@ -11,6 +11,8 @@ import HomeFeed from "./pages/HomeFeed";
 import SearchPage from "./pages/SearchPage";
 import RecipeDetail from "./pages/RecipeDetail";
 import ProfilePage from "./pages/ProfilePage";
+import EditProfilePage from "./pages/EditProfilePage";
+import SettingsPage from "./pages/SettingsPage";
 import CreatorProfile from "./pages/CreatorProfile";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
 import CreatePage from "./pages/CreatePage";
@@ -34,6 +36,8 @@ const App = () => (
             <Route path="/search" element={<SearchPage />} />
             <Route path="/recipe/:id" element={<RecipeDetail />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/edit" element={<EditProfilePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/creator/:id" element={<CreatorProfile />} />
             <Route path="/subscriptions" element={<SubscriptionsPage />} />
             <Route path="/create" element={<CreatePage />} />
