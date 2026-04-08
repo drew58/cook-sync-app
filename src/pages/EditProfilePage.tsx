@@ -40,15 +40,14 @@ const EditProfilePage = () => {
         avatar_url = urlData.publicUrl;
       }
 
-      const updates: Record<string, string> = {};
-      if (displayName) updates.display_name = displayName;
-      if (username) updates.username = username;
-      if (bio) updates.bio = bio;
-      if (avatar_url) updates.avatar_url = avatar_url;
-
       const { error } = await supabase
         .from("profiles")
-        .update(updates)
+        .update({
+          display_name: displayName || undefined,
+          username: username || undefined,
+          bio: bio || undefined,
+          avatar_url: avatar_url || undefined,
+        })
         .eq("user_id", user.id);
 
       if (error) throw error;
