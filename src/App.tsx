@@ -16,6 +16,7 @@ import SettingsPage from "./pages/SettingsPage";
 import CreatorProfile from "./pages/CreatorProfile";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
 import CreatePage from "./pages/CreatePage";
+import SavedRecipesPage from "./pages/SavedRecipesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/creator/:id" element={<CreatorProfile />} />
             <Route path="/subscriptions" element={<SubscriptionsPage />} />
             <Route path="/create" element={<CreatePage />} />
+            <Route path="/saved" element={<SavedRecipesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <BottomNav />

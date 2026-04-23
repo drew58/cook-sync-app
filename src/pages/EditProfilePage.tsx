@@ -69,7 +69,12 @@ const EditProfilePage = () => {
         newAvatarUrl = urlData.publicUrl;
       }
 
-      const updates: Record<string, any> = {
+      const updates: {
+        display_name: string | null;
+        username: string | null;
+        bio: string | null;
+        avatar_url?: string;
+      } = {
         display_name: displayName || null,
         username: username || null,
         bio: bio || null,

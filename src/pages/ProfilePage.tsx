@@ -1,28 +1,70 @@
-import { Settings, Bookmark, Users, ChevronRight } from "lucide-react";
+import { Settings, Bookmark, Users, ChevronRight, Loader2, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import food1 from "@/assets/food-1.jpg";
-import food2 from "@/assets/food-2.jpg";
-import food3 from "@/assets/food-3.jpg";
-import food5 from "@/assets/food-5.jpg";
 
-const savedRecipes = [food1, food2, food3, food5];
-
-const menuItems = [
-  { icon: Bookmark, label: "Saved Recipes", count: 24 },
-  { icon: Users, label: "Subscriptions", count: 8 },
-];
+type Recipe = { id: string; title: string; thumbnail_url: string | null };
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isCreator } = useAuth();
+  const [profile, setProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null; bio: string | null } | null>(null);
+  const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
+  const [subscribedRecipes, setSubscribedRecipes] = useState<Recipe[]>([]);
+  const [counts, setCounts] = useState({ saved: 0, following: 0, followers: 0, recipes: 0 });
+  const [tab, setTab] = useState<"saved" | "subscribed">("saved");
+  const [loading, setLoading] = useState(true);
 
-  const displayName = user?.user_metadata?.display_name || "User";
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const [{ data: prof }, { data: saves }, { data: follows }, { data: followers }, { data: myRecipes }] = await Promise.all([
+        supabase.from("profiles").select("display_name,username,avatar_url,bio").eq("user_id", user.id).maybeSingle(),
+        supabase.from("saves").select("recipe_id").eq("user_id", user.id),
+        supabase.from("follows").select("following_id").eq("follower_id", user.id),
+        supabase.from("follows").select("follower_id").eq("following_id", user.id),
+        supabase.from("recipes").select("id").eq("creator_id", user.id),
+      ]);
+
+      setProfile(prof as any);
+
+      const savedIds = (saves || []).map((s) => s.recipe_id);
+      const followingIds = (follows || []).map((f) => f.following_id);
+
+      const [{ data: savedRecipesData }, { data: subRecipesData }] = await Promise.all([
+        savedIds.length
+          ? supabase.from("recipes").select("id,title,thumbnail_url").in("id", savedIds).limit(6)
+          : Promise.resolve({ data: [] as Recipe[] }),
+        followingIds.length
+          ? supabase.from("recipes").select("id,title,thumbnail_url").in("creator_id", followingIds).order("created_at", { ascending: false }).limit(6)
+          : Promise.resolve({ data: [] as Recipe[] }),
+      ]);
+
+      setSavedRecipes((savedRecipesData as Recipe[]) || []);
+      setSubscribedRecipes((subRecipesData as Recipe[]) || []);
+      setCounts({
+        saved: saves?.length || 0,
+        following: follows?.length || 0,
+        followers: followers?.length || 0,
+        recipes: myRecipes?.length || 0,
+      });
+      setLoading(false);
+    })();
+  }, [user]);
+
+  const displayName = profile?.display_name || user?.user_metadata?.display_name || "User";
+  const username = profile?.username || user?.email?.split("@")[0] || "user";
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+
+  const menuItems = [
+    { icon: Bookmark, label: "Saved Recipes", count: counts.saved, onClick: () => navigate("/saved") },
+    { icon: Users, label: "Subscriptions", count: counts.following, onClick: () => navigate("/subscriptions") },
+  ];
 
   return (
     <div className="min-h-screen bg-background pb-24 pt-12 px-4">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold font-display text-foreground">Profile</h1>
         <button
@@ -33,14 +75,21 @@ const ProfilePage = () => {
         </button>
       </div>
 
-      {/* Profile card */}
-      <div className="glass-card p-5 flex items-center gap-4 mb-6">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground text-xl font-bold">
-          {initials}
-        </div>
-        <div className="flex-1">
-          <h2 className="font-bold text-foreground">{displayName}</h2>
-          <p className="text-sm text-muted-foreground">@{user?.email?.split("@")[0] || "user"} • Food Lover</p>
+      <div className="glass-card p-5 flex items-center gap-4 mb-3">
+        {profile?.avatar_url ? (
+          <img src={profile.avatar_url} alt={displayName} className="w-16 h-16 rounded-full object-cover" />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground text-xl font-bold">
+            {initials}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h2 className="font-bold text-foreground truncate">{displayName}</h2>
+            {isCreator && <span className="text-[9px] font-bold bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">CREATOR</span>}
+          </div>
+          <p className="text-xs text-muted-foreground truncate">@{username}</p>
+          {profile?.bio && <p className="text-xs text-foreground/80 mt-1 line-clamp-2">{profile.bio}</p>}
         </div>
         <button
           onClick={() => navigate("/profile/edit")}
@@ -50,12 +99,11 @@ const ProfilePage = () => {
         </button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         {[
-          { label: "Recipes", value: "24" },
-          { label: "Following", value: "156" },
-          { label: "Followers", value: "1.2k" },
+          { label: "Recipes", value: counts.recipes },
+          { label: "Following", value: counts.following },
+          { label: "Followers", value: counts.followers },
         ].map((s) => (
           <div key={s.label} className="glass-card p-3 text-center">
             <p className="font-bold text-foreground">{s.value}</p>
@@ -64,14 +112,11 @@ const ProfilePage = () => {
         ))}
       </div>
 
-      {/* Menu - removed Liked Videos */}
       <div className="space-y-2 mb-6">
         {menuItems.map((item) => (
           <button
             key={item.label}
-            onClick={() => {
-              if (item.label === "Subscriptions") navigate("/subscriptions");
-            }}
+            onClick={item.onClick}
             className="w-full glass-card p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
           >
             <div className="w-10 h-10 rounded-xl bg-light-orange flex items-center justify-center">
@@ -84,19 +129,46 @@ const ProfilePage = () => {
         ))}
       </div>
 
-      {/* Saved grid */}
-      <h3 className="font-bold text-foreground mb-3">Recently Saved</h3>
-      <div className="grid grid-cols-2 gap-3">
-        {savedRecipes.map((img, i) => (
-          <div
-            key={i}
-            className="aspect-square rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-transform"
-            onClick={() => navigate("/recipe/1")}
-          >
-            <img src={img} alt="Saved recipe" className="w-full h-full object-cover" loading="lazy" />
-          </div>
-        ))}
+      {/* Profile feed: tabs for saved + subscribed */}
+      <div className="flex gap-2 mb-3">
+        <button
+          onClick={() => setTab("saved")}
+          className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${tab === "saved" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"}`}
+        >
+          <Bookmark className="w-3.5 h-3.5 inline mr-1" /> Saved
+        </button>
+        <button
+          onClick={() => setTab("subscribed")}
+          className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${tab === "subscribed" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"}`}
+        >
+          <Heart className="w-3.5 h-3.5 inline mr-1" /> Subscribed
+        </button>
       </div>
+
+      {loading ? (
+        <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {(tab === "saved" ? savedRecipes : subscribedRecipes).length === 0 ? (
+            <p className="col-span-2 text-center text-xs text-muted-foreground py-8">
+              {tab === "saved" ? "No saved recipes yet." : "Subscribe to creators to see their recipes here."}
+            </p>
+          ) : (
+            (tab === "saved" ? savedRecipes : subscribedRecipes).map((r) => (
+              <div
+                key={r.id}
+                className="aspect-square rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-transform relative"
+                onClick={() => navigate(`/recipe/${r.id}`)}
+              >
+                <img src={r.thumbnail_url || food1} alt={r.title} className="w-full h-full object-cover" loading="lazy" />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/80 to-transparent p-2">
+                  <p className="text-[10px] font-semibold text-primary-foreground line-clamp-2">{r.title}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };

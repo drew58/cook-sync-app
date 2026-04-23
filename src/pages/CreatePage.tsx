@@ -20,7 +20,7 @@ const CreatePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuth();
+  const { user, isCreator, rolesLoading } = useAuth();
   const navigate = useNavigate();
 
   const toggleTag = (tag: string) => {
@@ -84,6 +84,26 @@ const CreatePage = () => {
   };
 
   const isVideo = mediaFile?.type.startsWith("video/");
+
+  if (!rolesLoading && user && !isCreator) {
+    return (
+      <div className="min-h-screen bg-background pb-24 pt-12 px-4 flex flex-col items-center justify-center text-center">
+        <div className="w-16 h-16 rounded-2xl bg-light-orange flex items-center justify-center mb-4">
+          <Upload className="w-7 h-7 text-primary" />
+        </div>
+        <h1 className="text-xl font-bold font-display text-foreground mb-2">Creator-only feature</h1>
+        <p className="text-sm text-muted-foreground max-w-xs mb-6">
+          Posting recipes is reserved for verified Food Creators. Apply for a creator account to start sharing your dishes with the world.
+        </p>
+        <button
+          onClick={() => navigate("/profile")}
+          className="px-5 py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/25"
+        >
+          Back to Profile
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24 pt-12 px-4">
