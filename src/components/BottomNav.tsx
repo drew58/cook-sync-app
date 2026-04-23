@@ -1,20 +1,21 @@
 import { Home, Search, PlusCircle, Users, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-
-const tabs = [
-  { icon: Home, label: "Home", path: "/home" },
-  { icon: Search, label: "Search", path: "/search" },
-  { icon: PlusCircle, label: "Create", path: "/create" },
-  { icon: Users, label: "Subs", path: "/subscriptions" },
-  { icon: User, label: "Profile", path: "/profile" },
-];
+import { useAuth } from "@/hooks/useAuth";
 
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isCreator } = useAuth();
 
-  // Hide on onboarding
   if (location.pathname === "/" || location.pathname === "/index" || location.pathname === "/onboarding" || location.pathname === "/auth") return null;
+
+  const tabs = [
+    { icon: Home, label: "Home", path: "/home" },
+    { icon: Search, label: "Search", path: "/search" },
+    ...(isCreator ? [{ icon: PlusCircle, label: "Create", path: "/create" }] : []),
+    { icon: Users, label: "Subs", path: "/subscriptions" },
+    { icon: User, label: "Profile", path: "/profile" },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50 pb-safe">

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ChefHat, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { lovable } from "@/integrations/lovable";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(false);
@@ -140,13 +141,15 @@ const Auth = () => {
         </div>
 
         <div className="flex gap-3">
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-card border border-border text-sm font-medium text-foreground hover:bg-secondary transition-colors">
+          <button
+            onClick={async () => {
+              const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/home` });
+              if (result.error) toast.error("Google sign-in failed");
+            }}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-card border border-border text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+          >
             <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="#EA4335" d="M5.27 9.76A7.5 7.5 0 0 1 12 4.5c1.77 0 3.37.61 4.63 1.63l3.45-3.45A12.5 12.5 0 0 0 12 0 12 12 0 0 0 1.24 6.65l4.03 3.11Z"/><path fill="#34A853" d="M16.04 18.01A7.4 7.4 0 0 1 12 19.5a7.5 7.5 0 0 1-6.73-4.24l-4.03 3.11A12 12 0 0 0 12 24a11.5 11.5 0 0 0 7.84-3l-3.8-2.99Z"/><path fill="#4A90D9" d="M19.84 21a11.7 11.7 0 0 0 3.66-8.5c0-.83-.08-1.64-.24-2.5H12v5h4.34a5.2 5.2 0 0 1-2.3 2.99l3.8 3.01Z"/><path fill="#FBBC05" d="M5.27 15.26A7.5 7.5 0 0 1 4.5 12c0-1.14.27-2.21.77-3.24L1.24 5.65A12 12 0 0 0 0 12c0 2.17.56 4.22 1.57 6l3.7-2.74Z"/></svg>
             Google
-          </button>
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-card border border-border text-sm font-medium text-foreground hover:bg-secondary transition-colors">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09ZM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25Z"/></svg>
-            Apple
           </button>
         </div>
 
