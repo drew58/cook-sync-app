@@ -2,6 +2,7 @@ import { ArrowLeft, User, Bell, Globe, Lock, Palette, CircleHelp, LogOut, Chevro
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { motion, AnimatePresence } from "framer-motion";
 
 const currencies = ["USD ($)", "EUR (€)", "GBP (£)", "NGN (₦)", "JPY (¥)", "CAD (C$)", "AUD (A$)", "INR (₹)", "ZAR (R)", "GHS (₵)"];
@@ -9,9 +10,9 @@ const currencies = ["USD ($)", "EUR (€)", "GBP (£)", "NGN (₦)", "JPY (¥)",
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { dark, toggle: toggleDark } = useTheme();
   const [showCurrency, setShowCurrency] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(() => localStorage.getItem("reseepe_currency") || "USD ($)");
-  const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState({ push: true, email: false, sms: false });
 
   const handleCurrencySelect = (c: string) => {
@@ -38,7 +39,7 @@ const SettingsPage = () => {
       title: "Preferences",
       items: [
         { icon: Globe, label: "Currency", value: selectedCurrency, action: () => setShowCurrency(true) },
-        { icon: Palette, label: "Dark Mode", toggle: true, toggled: darkMode, action: () => setDarkMode(!darkMode) },
+        { icon: Palette, label: "Dark Mode", toggle: true, toggled: dark, action: toggleDark },
         { icon: Bell, label: "Notifications", action: () => {} },
       ],
     },
