@@ -75,7 +75,7 @@ const VideoCard = ({ image, title, creator, creatorCountry, likes, tags, avatar,
             />
             {verified && (
               <div className="absolute -bottom-0.5 -right-0.5">
-                <BadgeCheck className="w-4 h-4 text-primary fill-primary/30" />
+                <VerifiedBadge size="sm" />
               </div>
             )}
           </div>
@@ -107,7 +107,7 @@ const VideoCard = ({ image, title, creator, creatorCountry, likes, tags, avatar,
         <h3 className="text-primary-foreground font-bold text-lg leading-tight">{title}</h3>
         <div className="flex items-center gap-1 mt-1">
           <p className="text-primary-foreground/80 text-sm">@{creator}</p>
-          {verified && <BadgeCheck className="w-3.5 h-3.5 text-primary-foreground/80" />}
+          {verified && <VerifiedBadge size="sm" />}
         </div>
         {creatorCountry && (
           <p className="text-primary-foreground/60 text-xs mt-0.5">{creatorCountry}</p>

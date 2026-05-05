@@ -1,4 +1,5 @@
-import { ArrowLeft, Star, BadgeCheck } from "lucide-react";
+import { ArrowLeft, Star } from "lucide-react";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import { useNavigate } from "react-router-dom";
 import food1 from "@/assets/food-1.jpg";
 import food2 from "@/assets/food-2.jpg";
@@ -32,7 +33,7 @@ const CreatorProfile = () => {
           <div className="flex-1 pb-1">
             <div className="flex items-center gap-1.5">
               <h1 className="font-bold text-lg text-foreground">Chef Ada</h1>
-              <BadgeCheck className="w-5 h-5 text-primary fill-primary/20" />
+              <VerifiedBadge size="md" />
             </div>
             <p className="text-sm text-muted-foreground">Nigerian Cuisine Expert</p>
           </div>
