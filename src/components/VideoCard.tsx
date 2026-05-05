@@ -1,5 +1,6 @@
-import { Heart, MessageCircle, Bookmark, Share2, Play, BadgeCheck, Lock } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Share2, Play, Lock } from "lucide-react";
 import { useState } from "react";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 interface VideoCardProps {
   image: string;
