@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      featured_creators: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          country: string | null
+          created_at: string
+          display_name: string
+          followers_seed: number
+          id: string
+          is_premium: boolean
+          username: string
+          verified: boolean
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          display_name: string
+          followers_seed?: number
+          id?: string
+          is_premium?: boolean
+          username: string
+          verified?: boolean
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          display_name?: string
+          followers_seed?: number
+          id?: string
+          is_premium?: boolean
+          username?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string
