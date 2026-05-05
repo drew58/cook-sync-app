@@ -17,41 +17,52 @@ const ProfilePage = () => {
   const [tab, setTab] = useState<"saved" | "subscribed">("saved");
   const [loading, setLoading] = useState(true);
 
+  const loadAll = async () => {
+    if (!user) return;
+    const [{ data: prof }, { data: saves }, { data: follows }, { data: followers }, { data: myRecipes }] = await Promise.all([
+      supabase.from("profiles").select("display_name,username,avatar_url,bio").eq("user_id", user.id).maybeSingle(),
+      supabase.from("saves").select("recipe_id").eq("user_id", user.id),
+      supabase.from("follows").select("following_id").eq("follower_id", user.id),
+      supabase.from("follows").select("follower_id").eq("following_id", user.id),
+      supabase.from("recipes").select("id").eq("creator_id", user.id),
+    ]);
+
+    setProfile(prof as any);
+
+    const savedIds = (saves || []).map((s) => s.recipe_id);
+    const followingIds = (follows || []).map((f) => f.following_id);
+
+    const [{ data: savedRecipesData }, { data: subRecipesData }] = await Promise.all([
+      savedIds.length
+        ? supabase.from("recipes").select("id,title,thumbnail_url").in("id", savedIds).limit(12)
+        : Promise.resolve({ data: [] as Recipe[] }),
+      followingIds.length
+        ? supabase.from("recipes").select("id,title,thumbnail_url,creator_id").in("creator_id", followingIds).order("created_at", { ascending: false }).limit(12)
+        : Promise.resolve({ data: [] as Recipe[] }),
+    ]);
+
+    setSavedRecipes((savedRecipesData as Recipe[]) || []);
+    setSubscribedRecipes((subRecipesData as Recipe[]) || []);
+    setCounts({
+      saved: saves?.length || 0,
+      following: follows?.length || 0,
+      followers: followers?.length || 0,
+      recipes: myRecipes?.length || 0,
+    });
+    setLoading(false);
+  };
+
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      const [{ data: prof }, { data: saves }, { data: follows }, { data: followers }, { data: myRecipes }] = await Promise.all([
-        supabase.from("profiles").select("display_name,username,avatar_url,bio").eq("user_id", user.id).maybeSingle(),
-        supabase.from("saves").select("recipe_id").eq("user_id", user.id),
-        supabase.from("follows").select("following_id").eq("follower_id", user.id),
-        supabase.from("follows").select("follower_id").eq("following_id", user.id),
-        supabase.from("recipes").select("id").eq("creator_id", user.id),
-      ]);
-
-      setProfile(prof as any);
-
-      const savedIds = (saves || []).map((s) => s.recipe_id);
-      const followingIds = (follows || []).map((f) => f.following_id);
-
-      const [{ data: savedRecipesData }, { data: subRecipesData }] = await Promise.all([
-        savedIds.length
-          ? supabase.from("recipes").select("id,title,thumbnail_url").in("id", savedIds).limit(6)
-          : Promise.resolve({ data: [] as Recipe[] }),
-        followingIds.length
-          ? supabase.from("recipes").select("id,title,thumbnail_url").in("creator_id", followingIds).order("created_at", { ascending: false }).limit(6)
-          : Promise.resolve({ data: [] as Recipe[] }),
-      ]);
-
-      setSavedRecipes((savedRecipesData as Recipe[]) || []);
-      setSubscribedRecipes((subRecipesData as Recipe[]) || []);
-      setCounts({
-        saved: saves?.length || 0,
-        following: follows?.length || 0,
-        followers: followers?.length || 0,
-        recipes: myRecipes?.length || 0,
-      });
-      setLoading(false);
-    })();
+    loadAll();
+    const ch = supabase
+      .channel("profile-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "follows", filter: `follower_id=eq.${user.id}` }, loadAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "follows", filter: `following_id=eq.${user.id}` }, loadAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "saves", filter: `user_id=eq.${user.id}` }, loadAll)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const displayName = profile?.display_name || user?.user_metadata?.display_name || "User";
