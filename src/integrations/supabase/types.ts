@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          recipe_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          recipe_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          recipe_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       featured_creators: {
         Row: {
           avatar_url: string | null
@@ -103,6 +130,33 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -144,6 +198,7 @@ export type Database = {
       }
       recipes: {
         Row: {
+          comment_count: number
           cook_time: string | null
           cost_estimate: string | null
           created_at: string
@@ -162,6 +217,7 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          comment_count?: number
           cook_time?: string | null
           cost_estimate?: string | null
           created_at?: string
@@ -180,6 +236,7 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          comment_count?: number
           cook_time?: string | null
           cost_estimate?: string | null
           created_at?: string

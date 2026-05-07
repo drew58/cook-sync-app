@@ -17,6 +17,9 @@ import CreatorProfile from "./pages/CreatorProfile";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
 import CreatePage from "./pages/CreatePage";
 import SavedRecipesPage from "./pages/SavedRecipesPage";
+import ReelsPage from "./pages/ReelsPage";
+import MessagesPage from "./pages/MessagesPage";
+import ChatPage from "./pages/ChatPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +46,9 @@ const App = () => (
             <Route path="/subscriptions" element={<SubscriptionsPage />} />
             <Route path="/create" element={<CreatePage />} />
             <Route path="/saved" element={<SavedRecipesPage />} />
+            <Route path="/reels" element={<ReelsPage />} />
+            <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/messages/:otherId" element={<ChatPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <BottomNav />
