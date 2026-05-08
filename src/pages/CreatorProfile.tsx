@@ -110,7 +110,7 @@ const CreatorProfile = () => {
           <button onClick={toggle} disabled={busy} className={`flex-1 py-3 rounded-2xl font-semibold text-sm shadow-lg ${following ? "bg-secondary text-foreground" : "bg-primary text-primary-foreground shadow-primary/25"}`}>
             {busy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : following ? "Subscribed" : "Subscribe"}
           </button>
-          <button onClick={() => user ? navigate(`/messages/${profile.user_id}`) : navigate("/auth")} className="px-5 py-3 rounded-2xl bg-secondary text-foreground font-semibold text-sm">Message</button>
+          <button onClick={() => navigate(profile?.user_id ? `/messages/${profile.user_id}` : "/messages")} className="px-5 py-3 rounded-2xl bg-secondary text-foreground font-semibold text-sm">Message</button>
         </div>
 
         {profile.bio && <p className="text-sm text-muted-foreground leading-relaxed mb-6">{profile.bio}</p>}

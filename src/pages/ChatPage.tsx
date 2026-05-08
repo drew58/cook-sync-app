@@ -11,7 +11,7 @@ type Profile = { user_id: string; display_name: string | null; username: string 
 const ChatPage = () => {
   const navigate = useNavigate();
   const { otherId } = useParams<{ otherId: string }>();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [other, setOther] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState("");
@@ -20,6 +20,7 @@ const ChatPage = () => {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate("/auth");
       return;
@@ -71,7 +72,7 @@ const ChatPage = () => {
       supabase.removeChannel(ch);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [otherId, user]);
+  }, [otherId, user, authLoading]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });

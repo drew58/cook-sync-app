@@ -69,7 +69,7 @@ const HomeFeed = () => {
             <span className="text-primary">E</span>
           </h1>
           <div className="flex gap-2">
-            <button className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center" onClick={() => navigate(user ? "/messages" : "/auth")}>
+            <button className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center" onClick={() => navigate("/messages")}>
               <MessageSquare className="w-4 h-4 text-foreground" />
             </button>
             <button className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center" onClick={() => navigate("/search")}>
@@ -80,24 +80,6 @@ const HomeFeed = () => {
       </div>
 
       <StoriesRow />
-
-      {/* Reels CTA */}
-      {recipes.length > 0 && (
-        <div className="px-4 mt-2">
-          <button
-            onClick={() => navigate(`/reels?id=${recipes[0].id}`)}
-            className="w-full p-4 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground flex items-center gap-3 shadow-lg shadow-primary/25"
-          >
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-              <Play className="w-5 h-5 fill-current ml-0.5" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="font-bold text-sm">Open Reels</p>
-              <p className="text-[11px] opacity-90">Vertical autoplay · swipe up for more</p>
-            </div>
-          </button>
-        </div>
-      )}
 
       <div className="px-4 space-y-4 mt-4">
         {loading && <div className="text-center py-10 text-sm text-muted-foreground">Loading...</div>}

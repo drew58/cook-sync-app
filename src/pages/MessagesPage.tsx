@@ -22,7 +22,7 @@ const timeAgo = (iso: string) => {
 
 const MessagesPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [convos, setConvos] = useState<Convo[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,6 +61,7 @@ const MessagesPage = () => {
   };
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate("/auth");
       return;
@@ -74,7 +75,7 @@ const MessagesPage = () => {
       supabase.removeChannel(ch);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, authLoading]);
 
   return (
     <div className="min-h-screen bg-background pb-24 pt-12">

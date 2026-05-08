@@ -1,4 +1,4 @@
-import { Home, Search, PlusCircle, Users, User } from "lucide-react";
+import { Home, Search, PlusCircle, Users, User, Play } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -7,10 +7,12 @@ const BottomNav = () => {
   const navigate = useNavigate();
   const { isCreator } = useAuth();
 
-  if (location.pathname === "/" || location.pathname === "/index" || location.pathname === "/onboarding" || location.pathname === "/auth") return null;
+  const hidden = ["/", "/index", "/onboarding", "/auth", "/reels"];
+  if (hidden.includes(location.pathname)) return null;
 
   const tabs = [
     { icon: Home, label: "Home", path: "/home" },
+    { icon: Play, label: "Reels", path: "/reels" },
     { icon: Search, label: "Search", path: "/search" },
     ...(isCreator ? [{ icon: PlusCircle, label: "Create", path: "/create" }] : []),
     { icon: Users, label: "Subs", path: "/subscriptions" },
@@ -19,15 +21,15 @@ const BottomNav = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50 pb-safe">
-      <div className="flex items-center justify-around max-w-lg mx-auto py-2">
+      <div className="flex items-center justify-around max-w-lg mx-auto py-2 px-1">
         {tabs.map((tab) => {
-          const isActive = location.pathname === tab.path;
+          const isActive = location.pathname === tab.path || (tab.path === "/reels" && location.pathname.startsWith("/reels"));
           const isCreate = tab.label === "Create";
           return (
             <button
               key={tab.label}
               onClick={() => navigate(tab.path)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 ${
+              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all duration-200 ${
                 isCreate
                   ? "relative -mt-4"
                   : isActive
