@@ -72,7 +72,7 @@ const ChatPage = () => {
       supabase.removeChannel(ch);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [otherId, user]);
+  }, [otherId, user, authLoading]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
