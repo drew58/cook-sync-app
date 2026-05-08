@@ -69,7 +69,7 @@ const HomeFeed = () => {
             <span className="text-primary">E</span>
           </h1>
           <div className="flex gap-2">
-            <button className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center" onClick={() => navigate(user ? "/messages" : "/auth")}>
+            <button className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center" onClick={() => navigate("/messages")}>
               <MessageSquare className="w-4 h-4 text-foreground" />
             </button>
             <button className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center" onClick={() => navigate("/search")}>
