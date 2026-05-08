@@ -1,274 +1,321 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Clock, DollarSign, ChefHat, Flame, Sparkles, X } from "lucide-react";
+import { Search, Clock, DollarSign, ChefHat, Sparkles, X, Loader2, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import food1 from "@/assets/food-1.jpg";
 import food2 from "@/assets/food-2.jpg";
 import food3 from "@/assets/food-3.jpg";
 import food5 from "@/assets/food-5.jpg";
 import food6 from "@/assets/food-6.jpg";
 
-const categories = ["All", "Nigerian", "Italian", "Asian", "Mexican", "Desserts", "Healthy"];
-
-const allIngredients = [
-  "Rice", "Eggs", "Chicken", "Pepper", "Onion", "Tomato", "Garlic",
-  "Pasta", "Cheese", "Butter", "Olive Oil", "Salt", "Sugar", "Flour",
-  "Milk", "Salmon", "Avocado", "Lemon", "Ginger", "Soy Sauce",
-  "Tortilla", "Beans", "Corn", "Cilantro", "Lime",
+const fallbackImages = [food1, food2, food3, food5, food6];
+const categories = ["All", "Nigerian", "Italian", "Asian", "Mexican", "Indian", "Ghanaian", "Desserts", "Healthy"];
+const popularIngredients = [
+  "Rice","Eggs","Chicken","Pepper","Onion","Tomato","Garlic","Pasta","Cheese","Butter",
+  "Olive Oil","Salt","Sugar","Flour","Milk","Salmon","Avocado","Lemon","Ginger","Soy Sauce",
+  "Tortilla","Beans","Corn","Cilantro","Lime","Beef","Shrimp","Spinach","Yam","Plantain",
 ];
 
-const results = [
-  { id: 1, image: food1, name: "Jollof Rice", creator: "Chef Ada", time: "30 min", cost: "$5", difficulty: "Easy", ingredients: 8 },
-  { id: 2, image: food2, name: "Pasta Carbonara", creator: "Marco", time: "20 min", cost: "$7", difficulty: "Medium", ingredients: 5 },
-  { id: 3, image: food5, name: "Street Tacos", creator: "Carlos", time: "25 min", cost: "$6", difficulty: "Easy", ingredients: 7 },
-  { id: 4, image: food6, name: "Smoothie Bowls", creator: "Priya", time: "10 min", cost: "$4", difficulty: "Easy", ingredients: 4 },
-  { id: 5, image: food3, name: "Poke Bowl", creator: "Yuki", time: "15 min", cost: "$9", difficulty: "Easy", ingredients: 6 },
-];
+type SortKey = "relevance" | "cheapest" | "fastest" | "fewest";
 
-const aiSuggestions = [
-  { id: 10, image: food1, name: "Egg Fried Rice", creator: "Chef Ada", time: "15 min", cost: "$3", difficulty: "Easy", ingredients: 4, match: "95%" },
-  { id: 11, image: food2, name: "Chicken Stir Fry", creator: "Marco", time: "20 min", cost: "$6", difficulty: "Easy", ingredients: 5, match: "88%" },
-  { id: 12, image: food5, name: "Tomato Egg Drop Soup", creator: "Yuki", time: "10 min", cost: "$2", difficulty: "Easy", ingredients: 3, match: "92%" },
-  { id: 13, image: food6, name: "Pepper Omelette", creator: "Priya", time: "8 min", cost: "$2", difficulty: "Easy", ingredients: 3, match: "97%" },
-  { id: 14, image: food3, name: "Garlic Butter Rice", creator: "Carlos", time: "12 min", cost: "$3", difficulty: "Easy", ingredients: 4, match: "90%" },
-];
+interface RecipeRow {
+  id: string;
+  title: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  cook_time: string | null;
+  cost_estimate: string | null;
+  ingredients: string[] | null;
+  tags: string[] | null;
+  creator_id: string;
+  creator_name?: string;
+  match?: number;
+  source: "db" | "ai";
+}
+
+const parseNum = (s: string | null | undefined) => {
+  if (!s) return Infinity;
+  const m = s.match(/\d+(\.\d+)?/);
+  return m ? parseFloat(m[0]) : Infinity;
+};
 
 const SearchPage = () => {
-  const [query, setQuery] = useState("");
+  const navigate = useNavigate();
   const [mode, setMode] = useState<"meal" | "ingredients">("meal");
+  const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [sort, setSort] = useState<SortKey>("relevance");
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
   const [ingredientSearch, setIngredientSearch] = useState("");
-  const [showAiResults, setShowAiResults] = useState(false);
-  const navigate = useNavigate();
+  const [results, setResults] = useState<RecipeRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
 
-  const filteredIngredients = allIngredients.filter((ing) =>
-    ing.toLowerCase().includes(ingredientSearch.toLowerCase())
+  const filteredIngredients = popularIngredients.filter((i) =>
+    i.toLowerCase().includes(ingredientSearch.toLowerCase())
   );
 
   const toggleIngredient = (ing: string) => {
-    setSelectedIngredients((prev) =>
-      prev.includes(ing) ? prev.filter((i) => i !== ing) : [...prev, ing]
-    );
-    setShowAiResults(false);
+    setSelectedIngredients((p) => p.includes(ing) ? p.filter((i) => i !== ing) : [...p, ing]);
   };
 
-  const removeIngredient = (ing: string) => {
-    setSelectedIngredients((prev) => prev.filter((i) => i !== ing));
-    setShowAiResults(false);
+  const hydrateCreators = async (rows: any[]): Promise<RecipeRow[]> => {
+    const ids = [...new Set(rows.map((r) => r.creator_id))];
+    if (!ids.length) return [];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, display_name, username")
+      .in("user_id", ids);
+    const map = new Map((profiles ?? []).map((p) => [p.user_id, p.display_name || p.username || "Chef"]));
+    return rows.map((r) => ({ ...r, creator_name: map.get(r.creator_id) ?? "Chef", source: "db" as const }));
   };
 
-  const handleAiSearch = () => {
-    if (selectedIngredients.length > 0) {
-      setShowAiResults(true);
+  const runDbSearch = async () => {
+    setLoading(true);
+    try {
+      let q = supabase.from("recipes").select("*").limit(40);
+      if (mode === "meal" && query.trim()) {
+        q = q.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
+      }
+      if (activeCategory !== "All") {
+        q = q.contains("tags", [activeCategory.toLowerCase()]);
+      }
+      if (mode === "ingredients" && selectedIngredients.length) {
+        q = q.overlaps("ingredients", selectedIngredients);
+      }
+      const { data, error } = await q;
+      if (error) throw error;
+      const hydrated = await hydrateCreators(data ?? []);
+
+      // compute match for ingredient mode
+      if (mode === "ingredients" && selectedIngredients.length) {
+        hydrated.forEach((r) => {
+          const ing = (r.ingredients ?? []).map((x) => x.toLowerCase());
+          const have = selectedIngredients.filter((s) => ing.some((i) => i.includes(s.toLowerCase()))).length;
+          r.match = Math.round((have / selectedIngredients.length) * 100);
+        });
+      }
+      setResults(hydrated);
+
+      // AI fallback if too few results
+      if (hydrated.length < 3 && (query.trim() || selectedIngredients.length)) {
+        runAiSearch(hydrated);
+      }
+    } catch (e: any) {
+      toast.error(e.message ?? "Search failed");
+    } finally {
+      setLoading(false);
     }
   };
+
+  const runAiSearch = async (existing: RecipeRow[] = []) => {
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-recipe-search", {
+        body: mode === "ingredients"
+          ? { ingredients: selectedIngredients }
+          : { query: query || activeCategory },
+      });
+      if (error) throw error;
+      const aiRecipes: RecipeRow[] = (data?.recipes ?? []).map((r: any, i: number) => ({
+        id: `ai-${i}-${Date.now()}`,
+        title: r.title,
+        description: r.description ?? r.cuisine,
+        thumbnail_url: null,
+        cook_time: `${r.cook_time_minutes} min`,
+        cost_estimate: `$${r.cost_usd}`,
+        ingredients: r.ingredients ?? [],
+        tags: [r.cuisine].filter(Boolean),
+        creator_id: "",
+        creator_name: r.creator,
+        match: r.match_percent,
+        source: "ai" as const,
+      }));
+      setResults([...existing, ...aiRecipes]);
+    } catch (e: any) {
+      toast.error("AI search unavailable");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // initial load
+  useEffect(() => { runDbSearch(); /* eslint-disable-next-line */ }, []);
+
+  // re-search on filter change (debounced for query)
+  useEffect(() => {
+    const t = setTimeout(() => { runDbSearch(); }, 350);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line
+  }, [query, activeCategory, mode, selectedIngredients]);
+
+  const sorted = useMemo(() => {
+    const arr = [...results];
+    if (sort === "cheapest") arr.sort((a, b) => parseNum(a.cost_estimate) - parseNum(b.cost_estimate));
+    else if (sort === "fastest") arr.sort((a, b) => parseNum(a.cook_time) - parseNum(b.cook_time));
+    else if (sort === "fewest") arr.sort((a, b) => (a.ingredients?.length ?? 99) - (b.ingredients?.length ?? 99));
+    else if (mode === "ingredients") arr.sort((a, b) => (b.match ?? 0) - (a.match ?? 0));
+    return arr;
+  }, [results, sort, mode]);
 
   return (
     <div className="min-h-screen bg-background pb-24 pt-12 px-4">
       {/* Mode toggle */}
       <div className="flex gap-2 mb-4">
         <button
-          onClick={() => { setMode("meal"); setShowAiResults(false); }}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            mode === "meal" ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" : "bg-secondary text-foreground"
-          }`}
-        >
-          Search by Meal
-        </button>
+          onClick={() => setMode("meal")}
+          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${mode === "meal" ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" : "bg-secondary text-foreground"}`}
+        >Search by Meal</button>
         <button
-          onClick={() => { setMode("ingredients"); setShowAiResults(false); }}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            mode === "ingredients" ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" : "bg-secondary text-foreground"
-          }`}
-        >
-          By Ingredients
-        </button>
+          onClick={() => setMode("ingredients")}
+          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${mode === "ingredients" ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" : "bg-secondary text-foreground"}`}
+        >By Ingredients</button>
       </div>
 
+      {/* Search bar */}
       {mode === "meal" ? (
-        <>
-          {/* Search bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for a dish..."
-              className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
-
-          {/* Categories */}
-          <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide mb-4">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all ${
-                  activeCategory === cat ? "bg-foreground text-background" : "bg-secondary text-foreground"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Results */}
-          <div className="space-y-3">
-            {results.map((r, i) => (
-              <motion.div
-                key={r.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="glass-card p-3 flex gap-3 cursor-pointer active:scale-[0.98] transition-transform"
-                onClick={() => navigate("/recipe/1")}
-              >
-                <img src={r.image} alt={r.name} className="w-20 h-20 rounded-xl object-cover flex-shrink-0" loading="lazy" />
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-sm text-foreground">{r.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">by {r.creator}</p>
-                  <div className="flex gap-3 mt-2">
-                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <Clock className="w-3 h-3" /> {r.time}
-                    </span>
-                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <DollarSign className="w-3 h-3" /> {r.cost}
-                    </span>
-                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <ChefHat className="w-3 h-3" /> {r.ingredients} items
-                    </span>
-                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <Flame className="w-3 h-3" /> {r.difficulty}
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </>
+        <div className="relative mb-3">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search any dish from anywhere in the world..."
+            className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+        </div>
       ) : (
-        <>
-          {/* Ingredient search */}
-          <div className="relative mb-3">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              value={ingredientSearch}
-              onChange={(e) => setIngredientSearch(e.target.value)}
-              placeholder="Search ingredients..."
-              className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
+        <div className="relative mb-3">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            value={ingredientSearch}
+            onChange={(e) => setIngredientSearch(e.target.value)}
+            placeholder="Find an ingredient..."
+            className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+        </div>
+      )}
 
-          {/* Selected ingredients */}
+      {/* Categories (meal mode only) */}
+      {mode === "meal" && (
+        <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide mb-2">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all ${activeCategory === cat ? "bg-foreground text-background" : "bg-secondary text-foreground"}`}
+            >{cat}</button>
+          ))}
+        </div>
+      )}
+
+      {/* Filter chips */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-hide mb-3">
+        <Filter className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+        {([
+          ["relevance", "Best match"],
+          ["cheapest", "Cheapest"],
+          ["fastest", "Fastest"],
+          ["fewest", "Few ingredients"],
+        ] as const).map(([k, label]) => (
+          <button
+            key={k}
+            onClick={() => setSort(k)}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${sort === k ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"}`}
+          >{label}</button>
+        ))}
+      </div>
+
+      {/* Ingredient picker */}
+      {mode === "ingredients" && (
+        <>
           <AnimatePresence>
             {selectedIngredients.length > 0 && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="mb-3 overflow-hidden"
-              >
-                <div className="flex flex-wrap gap-1.5 mb-3">
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mb-3 overflow-hidden">
+                <div className="flex flex-wrap gap-1.5">
                   {selectedIngredients.map((ing) => (
-                    <span
-                      key={ing}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/15 text-primary text-xs font-semibold"
-                    >
+                    <span key={ing} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/15 text-primary text-xs font-semibold">
                       {ing}
-                      <button onClick={() => removeIngredient(ing)}>
-                        <X className="w-3 h-3" />
-                      </button>
+                      <button onClick={() => toggleIngredient(ing)}><X className="w-3 h-3" /></button>
                     </span>
                   ))}
                 </div>
-                <button
-                  onClick={handleAiSearch}
-                  className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/25 active:scale-[0.98] transition-transform"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Find Recipes with {selectedIngredients.length} ingredient{selectedIngredients.length > 1 ? "s" : ""}
-                </button>
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* AI Results */}
-          <AnimatePresence>
-            {showAiResults && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="mb-4"
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  <h2 className="text-sm font-bold text-foreground">AI Suggestions</h2>
-                  <span className="text-[10px] text-muted-foreground">Based on your ingredients</span>
-                </div>
-                <div className="space-y-3">
-                  {aiSuggestions.map((r, i) => (
-                    <motion.div
-                      key={r.id}
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.08 }}
-                      className="glass-card p-3 flex gap-3 cursor-pointer active:scale-[0.98] transition-transform"
-                      onClick={() => navigate("/recipe/1")}
-                    >
-                      <div className="relative">
-                        <img src={r.image} alt={r.name} className="w-20 h-20 rounded-xl object-cover flex-shrink-0" loading="lazy" />
-                        <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                          {r.match}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-sm text-foreground">{r.name}</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">by {r.creator}</p>
-                        <div className="flex gap-3 mt-2">
-                          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                            <Clock className="w-3 h-3" /> {r.time}
-                          </span>
-                          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                            <DollarSign className="w-3 h-3" /> {r.cost}
-                          </span>
-                          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                            <ChefHat className="w-3 h-3" /> {r.ingredients} items
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Ingredient checklist */}
-          {!showAiResults && (
-            <div className="space-y-1">
-              <h2 className="text-sm font-bold text-foreground mb-2">Select your ingredients</h2>
-              {filteredIngredients.map((ing, i) => (
-                <motion.label
-                  key={ing}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.02 }}
-                  className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-secondary/50 cursor-pointer transition-colors"
-                >
-                  <Checkbox
-                    checked={selectedIngredients.includes(ing)}
-                    onCheckedChange={() => toggleIngredient(ing)}
-                  />
-                  <span className="text-sm text-foreground">{ing}</span>
-                </motion.label>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-2 gap-1 mb-4">
+            {filteredIngredients.slice(0, 20).map((ing) => (
+              <label key={ing} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-secondary/50 cursor-pointer">
+                <Checkbox checked={selectedIngredients.includes(ing)} onCheckedChange={() => toggleIngredient(ing)} />
+                <span className="text-sm text-foreground">{ing}</span>
+              </label>
+            ))}
+          </div>
         </>
+      )}
+
+      {/* Results */}
+      {loading && (
+        <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+      )}
+
+      <div className="space-y-3">
+        {sorted.map((r, i) => (
+          <motion.div
+            key={r.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: Math.min(i, 8) * 0.04 }}
+            className="glass-card p-3 flex gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+            onClick={() => r.source === "db" ? navigate(`/recipe/${r.id}`) : toast.info("AI suggestion — preview only")}
+          >
+            <div className="relative flex-shrink-0">
+              <img
+                src={r.thumbnail_url || fallbackImages[i % fallbackImages.length]}
+                alt={r.title}
+                className="w-20 h-20 rounded-xl object-cover"
+                loading="lazy"
+              />
+              {r.match != null && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full">{r.match}%</span>
+              )}
+              {r.source === "ai" && (
+                <span className="absolute -bottom-1 -left-1 bg-foreground text-background text-[8px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                  <Sparkles className="w-2.5 h-2.5" />AI
+                </span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-sm text-foreground truncate">{r.title}</h3>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">by {r.creator_name}</p>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                {r.cook_time && <span className="flex items-center gap-1 text-[10px] text-muted-foreground"><Clock className="w-3 h-3" />{r.cook_time}</span>}
+                {r.cost_estimate && <span className="flex items-center gap-1 text-[10px] text-muted-foreground"><DollarSign className="w-3 h-3" />{r.cost_estimate}</span>}
+                {r.ingredients && <span className="flex items-center gap-1 text-[10px] text-muted-foreground"><ChefHat className="w-3 h-3" />{r.ingredients.length} items</span>}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Always-available AI button */}
+      {(query.trim() || selectedIngredients.length > 0) && (
+        <button
+          onClick={() => runAiSearch(results)}
+          disabled={aiLoading}
+          className="mt-4 w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/25 active:scale-[0.98] transition-transform disabled:opacity-60"
+        >
+          {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          {aiLoading ? "Generating ideas..." : "Get AI recipe ideas"}
+        </button>
+      )}
+
+      {!loading && sorted.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground text-sm">
+          No recipes yet — try the AI button above to discover ideas.
+        </div>
       )}
     </div>
   );
