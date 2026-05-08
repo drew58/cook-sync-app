@@ -15,20 +15,19 @@ const stories = [
 ];
 
 const StoriesRow = () => (
-  <div className="flex gap-4 overflow-x-auto px-4 py-3 scrollbar-hide">
-    {/* Add story */}
+  <div className="flex gap-3 sm:gap-4 overflow-x-auto px-3 sm:px-4 py-3 scrollbar-hide -mx-1">
     <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-      <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center border-2 border-dashed border-primary/40">
+      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-secondary flex items-center justify-center border-2 border-dashed border-primary/40">
         <span className="text-primary text-xl font-light">+</span>
       </div>
       <span className="text-[10px] text-muted-foreground font-medium">Your Story</span>
     </div>
     {stories.map((s) => (
       <div key={s.name} className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer">
-        <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-primary to-accent">
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full p-[2px] bg-gradient-to-br from-primary to-accent">
           <img src={s.image} alt={s.name} className="w-full h-full rounded-full object-cover border-2 border-card" loading="lazy" />
         </div>
-        <span className="text-[10px] text-foreground font-medium truncate w-16 text-center">{s.name}</span>
+        <span className="text-[10px] text-foreground font-medium truncate w-14 sm:w-16 text-center">{s.name}</span>
       </div>
     ))}
   </div>
