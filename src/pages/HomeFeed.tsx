@@ -6,6 +6,7 @@ import StoriesRow from "@/components/StoriesRow";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getFeedCache, setFeedCache } from "@/lib/feedCache";
 
 type Recipe = {
   id: string;
@@ -25,8 +26,8 @@ type Recipe = {
 const HomeFeed = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [recipes, setRecipes] = useState<Recipe[]>(() => getFeedCache<Recipe>());
+  const [loading, setLoading] = useState(() => getFeedCache<Recipe>().length === 0);
 
   useEffect(() => {
     (async () => {
@@ -43,13 +44,13 @@ const HomeFeed = () => {
       ]);
       const profMap = new Map((profs || []).map((p: any) => [p.user_id, p]));
       const fcMap = new Map((fcs as any[] || []).map((f: any) => [f.username, f]));
-      setRecipes(
-        rows.map((r) => {
+      const enriched = rows.map((r) => {
           const p = profMap.get(r.creator_id);
           const fc = p?.username ? fcMap.get(p.username) : null;
           return { ...r, creator: p, verified: !!fc?.verified, country: fc?.country || null };
-        })
-      );
+        });
+      setRecipes(enriched);
+      setFeedCache(enriched);
       setLoading(false);
     })();
   }, []);
