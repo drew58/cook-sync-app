@@ -93,8 +93,8 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl pt-12 pb-3 px-4 flex items-center gap-3 border-b border-border/50">
+    <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
+      <div className="flex-shrink-0 z-10 bg-background/95 backdrop-blur-xl pt-12 pb-3 px-4 flex items-center gap-3 border-b border-border/50">
         <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
           <ArrowLeft className="w-4 h-4 text-foreground" />
         </button>
@@ -109,7 +109,7 @@ const ChatPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-2">
         {loading ? (
           <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
         ) : messages.length === 0 ? (
@@ -133,7 +133,7 @@ const ChatPage = () => {
         <div ref={endRef} />
       </div>
 
-      <div className="sticky bottom-0 px-3 py-3 border-t border-border/50 bg-background flex items-center gap-2 pb-safe">
+      <div className="flex-shrink-0 px-3 pt-3 border-t border-border/50 bg-background flex items-center gap-2 pb-safe">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}

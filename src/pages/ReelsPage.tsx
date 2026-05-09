@@ -6,6 +6,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import CommentsSheet from "@/components/CommentsSheet";
+import ShareSheet from "@/components/ShareSheet";
+import { getFeedCache, setFeedCache } from "@/lib/feedCache";
+import { persistLike, persistSave } from "@/lib/recipeActions";
 
 type Reel = {
   id: string;
@@ -32,13 +35,14 @@ const ReelsPage = () => {
   const [params] = useSearchParams();
   const startId = params.get("id");
 
-  const [reels, setReels] = useState<Reel[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reels, setReels] = useState<Reel[]>(() => getFeedCache<Reel>());
+  const [loading, setLoading] = useState(() => getFeedCache<Reel>().length === 0);
   const [done, setDone] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
   const [likedSet, setLikedSet] = useState<Set<string>>(new Set());
   const [savedSet, setSavedSet] = useState<Set<string>>(new Set());
   const [commentFor, setCommentFor] = useState<string | null>(null);
+  const [shareFor, setShareFor] = useState<Reel | null>(null);
   const [paused, setPaused] = useState<Record<string, boolean>>({});
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -71,7 +75,11 @@ const ReelsPage = () => {
     const rows = (data || []) as any[];
     if (rows.length < PAGE) setDone(true);
     const enriched = await hydrate(rows);
-    setReels((prev) => [...prev, ...enriched]);
+    setReels((prev) => {
+      const next = [...prev, ...enriched];
+      setFeedCache(next);
+      return next;
+    });
     setLoading(false);
   }, [loading, done, reels.length, hydrate]);
 
@@ -95,6 +103,7 @@ const ReelsPage = () => {
       }
       const enriched = await hydrate(rows);
       setReels(enriched);
+      setFeedCache(enriched);
       if (rows.length < PAGE) setDone(true);
       setLoading(false);
     })();
@@ -155,10 +164,15 @@ const ReelsPage = () => {
       return n;
     });
     setReels((prev) => prev.map((x) => (x.id === r.id ? { ...x, like_count: x.like_count + (liked ? -1 : 1) } : x)));
-    if (liked) {
-      await supabase.from("likes").delete().eq("user_id", user.id).eq("recipe_id", r.id);
-    } else {
-      await supabase.from("likes").insert({ user_id: user.id, recipe_id: r.id });
+    const { error } = await persistLike(user.id, r.id, !liked);
+    if (error) {
+      setLikedSet((p) => {
+        const n = new Set(p);
+        liked ? n.add(r.id) : n.delete(r.id);
+        return n;
+      });
+      setReels((prev) => prev.map((x) => (x.id === r.id ? { ...x, like_count: Math.max(0, x.like_count + (liked ? 1 : -1)) } : x)));
+      toast.error(error.message);
     }
   };
 
@@ -171,23 +185,22 @@ const ReelsPage = () => {
       return n;
     });
     setReels((prev) => prev.map((x) => (x.id === r.id ? { ...x, save_count: x.save_count + (saved ? -1 : 1) } : x)));
-    if (saved) {
-      await supabase.from("saves").delete().eq("user_id", user.id).eq("recipe_id", r.id);
-    } else {
-      await supabase.from("saves").insert({ user_id: user.id, recipe_id: r.id });
+    const { error } = await persistSave(user.id, r.id, !saved);
+    if (error) {
+      setSavedSet((p) => {
+        const n = new Set(p);
+        saved ? n.add(r.id) : n.delete(r.id);
+        return n;
+      });
+      setReels((prev) => prev.map((x) => (x.id === r.id ? { ...x, save_count: Math.max(0, x.save_count + (saved ? 1 : -1)) } : x)));
+      toast.error(error.message);
+    } else if (!saved) {
       toast.success("Saved");
     }
   };
 
-  const share = async (r: Reel) => {
-    const url = `${window.location.origin}/recipe/${r.id}`;
-    try {
-      if (navigator.share) await navigator.share({ title: r.title, url });
-      else {
-        await navigator.clipboard.writeText(url);
-        toast.success("Link copied");
-      }
-    } catch {}
+  const bumpCommentCount = (recipeId: string, delta: number) => {
+    setReels((prev) => prev.map((x) => (x.id === recipeId ? { ...x, comment_count: Math.max(0, x.comment_count + delta) } : x)));
   };
 
   return (
@@ -254,7 +267,7 @@ const ReelsPage = () => {
                   <Bookmark className={`w-7 h-7 ${saved ? "fill-white text-white" : "text-white"}`} />
                   <span className="text-[11px] text-white font-semibold">{r.save_count}</span>
                 </button>
-                <button onClick={() => share(r)} className="flex flex-col items-center gap-1">
+                <button onClick={() => setShareFor(r)} className="flex flex-col items-center gap-1">
                   <Share2 className="w-7 h-7 text-white" />
                 </button>
               </div>
@@ -302,7 +315,8 @@ const ReelsPage = () => {
         )}
       </div>
 
-      <CommentsSheet recipeId={commentFor} onClose={() => setCommentFor(null)} />
+      <CommentsSheet recipeId={commentFor} onClose={() => setCommentFor(null)} onCountChange={bumpCommentCount} />
+      <ShareSheet recipe={shareFor ? { id: shareFor.id, title: shareFor.title } : null} onClose={() => setShareFor(null)} />
     </div>
   );
 };

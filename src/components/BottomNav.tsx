@@ -8,7 +8,7 @@ const BottomNav = () => {
   const { isCreator } = useAuth();
 
   const hidden = ["/", "/index", "/onboarding", "/auth", "/reels"];
-  if (hidden.includes(location.pathname)) return null;
+  if (hidden.includes(location.pathname) || location.pathname.startsWith("/messages/")) return null;
 
   const tabs = [
     { icon: Home, label: "Home", path: "/home" },
