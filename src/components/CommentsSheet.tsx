@@ -78,14 +78,22 @@ const CommentsSheet = ({ recipeId, onClose, onCountChange }: Props) => {
             .eq("user_id", row.user_id)
             .maybeSingle();
           row.profile = prof as any;
-          setComments((prev) => (prev.find((c) => c.id === row.id) ? prev : [...prev, row]));
+          setComments((prev) => {
+            if (prev.find((c) => c.id === row.id)) return prev;
+            onCountChange?.(row.recipe_id, 1);
+            return [...prev, row];
+          });
           setTimeout(() => listRef.current?.scrollTo({ top: 99999, behavior: "smooth" }), 50);
         }
       )
       .on(
         "postgres_changes",
         { event: "DELETE", schema: "public", table: "comments", filter: `recipe_id=eq.${recipeId}` },
-        (payload) => setComments((prev) => prev.filter((c) => c.id !== (payload.old as any).id))
+        (payload) => setComments((prev) => {
+          const existed = prev.some((c) => c.id === (payload.old as any).id);
+          if (existed) onCountChange?.(recipeId, -1);
+          return prev.filter((c) => c.id !== (payload.old as any).id);
+        })
       )
       .subscribe();
     return () => {
