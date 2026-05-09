@@ -50,7 +50,7 @@ const CreatePage = () => {
 
     setIsUploading(true);
     try {
-      let videoUrl = "";
+      let mediaUrl = "";
       if (mediaFile) {
         const ext = mediaFile.name.split(".").pop();
         const path = `${user.id}/${Date.now()}.${ext}`;
@@ -59,13 +59,15 @@ const CreatePage = () => {
           .upload(path, mediaFile);
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("videos").getPublicUrl(path);
-        videoUrl = urlData.publicUrl;
+        mediaUrl = urlData.publicUrl;
       }
+      const uploadedVideo = !!mediaFile?.type.startsWith("video/");
 
       const { error } = await supabase.from("recipes").insert({
         creator_id: user.id,
         title: title.trim(),
-        video_url: videoUrl || null,
+        video_url: uploadedVideo ? mediaUrl : null,
+        thumbnail_url: !uploadedVideo ? mediaUrl || null : null,
         cost_estimate: costEstimate || null,
         cook_time: cookTime || null,
         ingredients: ingredients.split("\n").filter(Boolean),
