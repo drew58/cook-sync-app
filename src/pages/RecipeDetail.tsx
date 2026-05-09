@@ -222,7 +222,7 @@ const RecipeDetail = () => {
           )}
         </div>
       </motion.div>
-      <CommentsSheet recipeId={id || null} onClose={() => setCommentsOpen(false)} onCountChange={(_, delta) => setRecipe((r: any) => r ? { ...r, comment_count: Math.max(0, (r.comment_count || 0) + delta) } : r)} />
+      <CommentsSheet recipeId={commentsOpen ? id || null : null} onClose={() => setCommentsOpen(false)} onCountChange={(_, delta) => setRecipe((r: any) => r ? { ...r, comment_count: Math.max(0, (r.comment_count || 0) + delta) } : r)} />
       {!commentsOpen && <ShareSheet recipe={shareOpen && id ? { id, title: recipe?.title || "Recipe" } : null} onClose={() => setShareOpen(false)} />}
     </div>
   );
