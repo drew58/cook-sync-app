@@ -18,6 +18,7 @@ type CommentRow = {
 interface Props {
   recipeId: string | null;
   onClose: () => void;
+  onCountChange?: (recipeId: string, delta: number) => void;
 }
 
 const timeAgo = (iso: string) => {
@@ -28,7 +29,7 @@ const timeAgo = (iso: string) => {
   return `${Math.floor(s / 86400)}d`;
 };
 
-const CommentsSheet = ({ recipeId, onClose }: Props) => {
+const CommentsSheet = ({ recipeId, onClose, onCountChange }: Props) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [comments, setComments] = useState<CommentRow[]>([]);
@@ -100,14 +101,30 @@ const CommentsSheet = ({ recipeId, onClose }: Props) => {
     const content = text.trim();
     if (!content || !recipeId) return;
     setSending(true);
-    const { error } = await supabase.from("comments").insert({ recipe_id: recipeId, user_id: user.id, content });
+    const { data, error } = await supabase.from("comments").insert({ recipe_id: recipeId, user_id: user.id, content }).select("*").single();
     if (error) toast.error(error.message);
-    else setText("");
+    else {
+      const row = data as CommentRow;
+      const { data: prof } = await supabase.from("profiles").select("user_id,display_name,username,avatar_url").eq("user_id", user.id).maybeSingle();
+      row.profile = prof as any;
+      setComments((prev) => (prev.find((c) => c.id === row.id) ? prev : [...prev, row]));
+      onCountChange?.(recipeId, 1);
+      setText("");
+      setTimeout(() => listRef.current?.scrollTo({ top: 99999, behavior: "smooth" }), 50);
+    }
     setSending(false);
   };
 
   const remove = async (id: string) => {
-    await supabase.from("comments").delete().eq("id", id);
+    const row = comments.find((c) => c.id === id);
+    setComments((prev) => prev.filter((c) => c.id !== id));
+    if (row?.recipe_id) onCountChange?.(row.recipe_id, -1);
+    const { error } = await supabase.from("comments").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      if (row) setComments((prev) => [...prev, row].sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at)));
+      if (row?.recipe_id) onCountChange?.(row.recipe_id, 1);
+    }
   };
 
   return (
