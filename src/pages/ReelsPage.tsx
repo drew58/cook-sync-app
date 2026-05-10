@@ -254,20 +254,20 @@ const ReelsPage = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
 
               {/* Right action rail */}
-              <div className="absolute right-3 bottom-32 flex flex-col gap-5 z-10">
-                <button onClick={() => toggleLike(r)} className="flex flex-col items-center gap-1">
+              <div className="absolute right-3 bottom-32 flex flex-col gap-5 z-20">
+                <button onClick={(e) => { e.stopPropagation(); toggleLike(r); }} className="flex flex-col items-center gap-1">
                   <Heart className={`w-7 h-7 ${liked ? "fill-red-500 text-red-500" : "text-white"}`} />
                   <span className="text-[11px] text-white font-semibold">{r.like_count}</span>
                 </button>
-                <button onClick={() => setCommentFor(r.id)} className="flex flex-col items-center gap-1">
+                <button onClick={(e) => { e.stopPropagation(); setCommentFor(r.id); }} className="flex flex-col items-center gap-1">
                   <MessageCircle className="w-7 h-7 text-white" />
                   <span className="text-[11px] text-white font-semibold">{r.comment_count}</span>
                 </button>
-                <button onClick={() => toggleSave(r)} className="flex flex-col items-center gap-1">
+                <button onClick={(e) => { e.stopPropagation(); toggleSave(r); }} className="flex flex-col items-center gap-1">
                   <Bookmark className={`w-7 h-7 ${saved ? "fill-white text-white" : "text-white"}`} />
                   <span className="text-[11px] text-white font-semibold">{r.save_count}</span>
                 </button>
-                <button onClick={() => setShareFor(r)} className="flex flex-col items-center gap-1">
+                <button onClick={(e) => { e.stopPropagation(); setShareFor(r); }} className="flex flex-col items-center gap-1">
                   <Share2 className="w-7 h-7 text-white" />
                 </button>
               </div>
