@@ -7,7 +7,7 @@ const BottomNav = () => {
   const navigate = useNavigate();
   const { isCreator } = useAuth();
 
-  const hidden = ["/", "/index", "/onboarding", "/auth", "/reels"];
+  const hidden = ["/", "/index", "/onboarding", "/auth"];
   if (hidden.includes(location.pathname) || location.pathname.startsWith("/messages/")) return null;
 
   const tabs = [
