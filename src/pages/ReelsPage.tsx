@@ -254,7 +254,7 @@ const ReelsPage = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
 
               {/* Right action rail */}
-              <div className="absolute right-3 bottom-32 flex flex-col gap-5 z-20">
+              <div className="absolute right-3 bottom-6 flex flex-col gap-5 z-20">
                 <button onClick={(e) => { e.stopPropagation(); toggleLike(r); }} className="flex flex-col items-center gap-1">
                   <Heart className={`w-7 h-7 ${liked ? "fill-red-500 text-red-500" : "text-white"}`} />
                   <span className="text-[11px] text-white font-semibold">{r.like_count}</span>
@@ -273,7 +273,7 @@ const ReelsPage = () => {
               </div>
 
               {/* Bottom info */}
-              <div className="relative z-10 p-5 pr-20 pb-32 w-full">
+              <div className="relative z-10 p-5 pr-20 pb-6 w-full">
                 <button
                   onClick={() => r.creator?.username && navigate(`/creator/${r.creator.username}`)}
                   className="flex items-center gap-2 mb-2"
