@@ -240,7 +240,7 @@ const ReelsPage = () => {
                   src={r.video_url}
                   poster={r.thumbnail_url || undefined}
                   loop
-                  muted
+                  muted={muted}
                   playsInline
                   onClick={() => setPaused((p) => ({ ...p, [r.id]: !p[r.id] }))}
                   className="absolute inset-0 w-full h-full object-cover"
