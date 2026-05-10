@@ -139,7 +139,7 @@ const CommentsSheet = ({ recipeId, onClose, onCountChange }: Props) => {
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 bg-foreground/50 flex items-end justify-center"
+          className="fixed inset-0 z-[60] bg-foreground/50 flex items-end justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
