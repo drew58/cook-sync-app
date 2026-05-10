@@ -221,7 +221,7 @@ const ReelsPage = () => {
           const liked = likedSet.has(r.id);
           const saved = savedSet.has(r.id);
           return (
-            <div key={r.id} data-reel data-idx={i} className="h-screen w-full snap-start relative flex items-end">
+            <div key={r.id} data-reel data-idx={i} className="h-full w-full snap-start relative flex items-end" style={{ minHeight: "100%" }}>
               {r.video_url ? (
                 <video
                   ref={(el) => {
