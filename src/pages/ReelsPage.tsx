@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Volume2, VolumeX } from "lucide-react";
 import { Heart, MessageCircle, Bookmark, Share2, ArrowLeft, Loader2, BookOpen, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,6 +45,7 @@ const ReelsPage = () => {
   const [commentFor, setCommentFor] = useState<string | null>(null);
   const [shareFor, setShareFor] = useState<Reel | null>(null);
   const [paused, setPaused] = useState<Record<string, boolean>>({});
+  const [muted, setMuted] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
@@ -211,6 +213,13 @@ const ReelsPage = () => {
       >
         <ArrowLeft className="w-5 h-5 text-primary-foreground" />
       </button>
+      <button
+        onClick={() => setMuted((m) => !m)}
+        className="absolute top-12 right-4 z-30 w-10 h-10 rounded-full bg-foreground/30 backdrop-blur-md flex items-center justify-center"
+        aria-label={muted ? "Unmute" : "Mute"}
+      >
+        {muted ? <VolumeX className="w-5 h-5 text-primary-foreground" /> : <Volume2 className="w-5 h-5 text-primary-foreground" />}
+      </button>
 
       <div
         ref={containerRef}
@@ -231,7 +240,7 @@ const ReelsPage = () => {
                   src={r.video_url}
                   poster={r.thumbnail_url || undefined}
                   loop
-                  muted
+                  muted={muted}
                   playsInline
                   onClick={() => setPaused((p) => ({ ...p, [r.id]: !p[r.id] }))}
                   className="absolute inset-0 w-full h-full object-cover"
