@@ -204,7 +204,7 @@ const ReelsPage = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-30 max-w-lg mx-auto">
+    <div className="fixed inset-x-0 top-0 bottom-16 bg-black z-30 max-w-lg mx-auto">
       <button
         onClick={() => navigate(-1)}
         className="absolute top-12 left-4 z-30 w-10 h-10 rounded-full bg-foreground/30 backdrop-blur-md flex items-center justify-center"
@@ -214,7 +214,7 @@ const ReelsPage = () => {
 
       <div
         ref={containerRef}
-        className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+        className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
         style={{ scrollSnapType: "y mandatory" }}
       >
         {reels.map((r, i) => {
