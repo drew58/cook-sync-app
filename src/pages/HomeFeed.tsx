@@ -1,4 +1,4 @@
-import { Search, Crown, Lock, MessageSquare, Play } from "lucide-react";
+import { Search, Crown, Lock, MessageSquare, Play, Volume2, VolumeX, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
