@@ -1,6 +1,6 @@
 import { Search, Crown, Lock, MessageSquare, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import StoriesRow from "@/components/StoriesRow";
 import VerifiedBadge from "@/components/VerifiedBadge";
@@ -124,7 +124,9 @@ const HomeFeed = () => {
             onClick={() => navigate(`/reels?id=${r.id}`)}
             className="relative w-full aspect-[9/14] rounded-3xl overflow-hidden cursor-pointer group"
           >
-            {r.thumbnail_url ? (
+            {r.video_url ? (
+              <FeedVideo src={r.video_url} poster={r.thumbnail_url || undefined} title={r.title} />
+            ) : r.thumbnail_url ? (
               <img src={r.thumbnail_url} alt={r.title} className="w-full h-full object-cover" loading="lazy" />
             ) : (
               <div className="w-full h-full bg-secondary" />
