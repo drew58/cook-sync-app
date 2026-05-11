@@ -164,8 +164,7 @@ const HomeFeed = () => {
             key={r.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            onClick={() => navigate(`/reels?id=${r.id}`)}
-            className="relative w-full aspect-[9/14] rounded-3xl overflow-hidden cursor-pointer group"
+            className="relative w-full aspect-[9/14] rounded-3xl overflow-hidden group"
           >
             {r.video_url ? (
               <FeedVideo src={r.video_url} poster={r.thumbnail_url || undefined} title={r.title} />
@@ -174,20 +173,15 @@ const HomeFeed = () => {
             ) : (
               <div className="w-full h-full bg-secondary" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent pointer-events-none" />
             {/* Tags */}
             {r.tags && r.tags.length > 0 && (
-              <div className="absolute top-4 left-4 flex flex-wrap gap-1.5">
+              <div className="absolute top-4 left-4 flex flex-wrap gap-1.5 pointer-events-none">
                 {r.tags.slice(0, 2).map((t) => (
                   <span key={t} className="tag-badge bg-card/80 text-foreground">{t}</span>
                 ))}
               </div>
             )}
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="w-16 h-16 rounded-full bg-foreground/30 backdrop-blur-md flex items-center justify-center">
-                <Play className="w-7 h-7 text-primary-foreground fill-current ml-1" />
-              </div>
-            </div>
             {r.creator?.avatar_url && (
               <button
                 onClick={(e) => { e.stopPropagation(); navigate(`/creator/${r.creator?.username}`); }}
@@ -199,7 +193,7 @@ const HomeFeed = () => {
                 </div>
               </button>
             )}
-            <div className="absolute bottom-4 left-4 right-16 z-10">
+            <div className="absolute bottom-4 left-4 right-16 z-10 pointer-events-none">
               <h3 className="text-primary-foreground font-bold text-lg leading-tight line-clamp-2">{r.title}</h3>
               <div className="flex items-center gap-1 mt-1">
                 <p className="text-primary-foreground/80 text-sm">@{r.creator?.username}</p>
@@ -210,6 +204,12 @@ const HomeFeed = () => {
                 {r.cost_estimate && <span>💰 {r.cost_estimate}</span>}
                 <span>♥ {r.like_count}</span>
               </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); navigate(`/recipe/${r.id}`); }}
+                className="pointer-events-auto mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold"
+              >
+                <BookOpen className="w-3.5 h-3.5" /> View Recipe
+              </button>
             </div>
           </motion.div>
         ))}
