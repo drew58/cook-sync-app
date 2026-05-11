@@ -1,22 +1,22 @@
-import { Check } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 
 interface VerifiedBadgeProps {
   size?: "sm" | "md";
   className?: string;
 }
 
-// Reseepe green verified badge — solid green disc with bold white check
+// Reseepe verified — classic starburst badge (lucide BadgeCheck), bolder stroke
 const VerifiedBadge = ({ size = "sm", className = "" }: VerifiedBadgeProps) => {
-  const wrap = size === "sm" ? "w-4 h-4" : "w-5 h-5";
-  const icon = size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5";
+  const dim = size === "sm" ? "w-[18px] h-[18px]" : "w-[22px] h-[22px]";
   return (
-    <span
-      className={`inline-flex items-center justify-center rounded-full shadow-sm ring-1 ring-white/70 ${wrap} ${className}`}
-      style={{ backgroundColor: "hsl(142 65% 40%)" }}
+    <BadgeCheck
+      className={`${dim} ${className} drop-shadow-sm`}
+      style={{ color: "hsl(142 65% 40%)" }}
+      strokeWidth={2.75}
+      fill="hsl(142 65% 40%)"
+      stroke="white"
       aria-label="Verified"
-    >
-      <Check className={`${icon} text-white`} strokeWidth={4} />
-    </span>
+    />
   );
 };
 

@@ -1,6 +1,6 @@
 import { Search, Crown, Lock, MessageSquare, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import StoriesRow from "@/components/StoriesRow";
 import VerifiedBadge from "@/components/VerifiedBadge";
@@ -12,6 +12,7 @@ type Recipe = {
   id: string;
   title: string;
   thumbnail_url: string | null;
+  video_url: string | null;
   cook_time: string | null;
   cost_estimate: string | null;
   like_count: number;
@@ -21,6 +22,36 @@ type Recipe = {
   creator?: { display_name: string | null; username: string | null; avatar_url: string | null };
   verified?: boolean;
   country?: string | null;
+};
+
+const FeedVideo = ({ src, poster, title }: { src: string; poster?: string; title: string }) => {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.5) el.play().catch(() => {});
+        else el.pause();
+      },
+      { threshold: [0, 0.5, 1] }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <video
+      ref={ref}
+      src={src}
+      poster={poster}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      aria-label={title}
+      className="w-full h-full object-cover"
+    />
+  );
 };
 
 const HomeFeed = () => {
@@ -93,7 +124,9 @@ const HomeFeed = () => {
             onClick={() => navigate(`/reels?id=${r.id}`)}
             className="relative w-full aspect-[9/14] rounded-3xl overflow-hidden cursor-pointer group"
           >
-            {r.thumbnail_url ? (
+            {r.video_url ? (
+              <FeedVideo src={r.video_url} poster={r.thumbnail_url || undefined} title={r.title} />
+            ) : r.thumbnail_url ? (
               <img src={r.thumbnail_url} alt={r.title} className="w-full h-full object-cover" loading="lazy" />
             ) : (
               <div className="w-full h-full bg-secondary" />
