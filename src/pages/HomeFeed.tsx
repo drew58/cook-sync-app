@@ -26,31 +26,74 @@ type Recipe = {
 
 const FeedVideo = ({ src, poster, title }: { src: string; poster?: string; title: string }) => {
   const ref = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+  const [paused, setPaused] = useState(false);
+  const [inView, setInView] = useState(false);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio > 0.5) el.play().catch(() => {});
+        const visible = entry.isIntersecting && entry.intersectionRatio > 0.5;
+        setInView(visible);
+        if (visible && !paused) el.play().catch(() => {});
         else el.pause();
       },
       { threshold: [0, 0.5, 1] }
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
+  }, [paused]);
+
+  const handleTap = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const el = ref.current;
+    if (!el) return;
+    if (muted) {
+      setMuted(false);
+      el.muted = false;
+      el.play().catch(() => {});
+      return;
+    }
+    if (el.paused) {
+      setPaused(false);
+      el.play().catch(() => {});
+    } else {
+      setPaused(true);
+      el.pause();
+    }
+  };
+
   return (
-    <video
-      ref={ref}
-      src={src}
-      poster={poster}
-      muted
-      loop
-      playsInline
-      preload="metadata"
-      aria-label={title}
-      className="w-full h-full object-cover"
-    />
+    <div className="relative w-full h-full" onClick={handleTap}>
+      <video
+        ref={ref}
+        src={src}
+        poster={poster}
+        muted={muted}
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={title}
+        className="w-full h-full object-cover"
+      />
+      {/* Mute/unmute hint */}
+      <button
+        onClick={(e) => { e.stopPropagation(); setMuted((m) => { const nm = !m; if (ref.current) ref.current.muted = nm; return nm; }); }}
+        className="absolute bottom-3 right-3 z-30 w-9 h-9 rounded-full bg-foreground/40 backdrop-blur-md flex items-center justify-center"
+        aria-label={muted ? "Unmute" : "Mute"}
+      >
+        {muted ? <VolumeX className="w-4 h-4 text-primary-foreground" /> : <Volume2 className="w-4 h-4 text-primary-foreground" />}
+      </button>
+      {paused && inView && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-16 h-16 rounded-full bg-foreground/40 backdrop-blur-md flex items-center justify-center">
+            <Play className="w-7 h-7 text-primary-foreground fill-current ml-1" />
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
