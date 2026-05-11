@@ -12,6 +12,7 @@ type Recipe = {
   id: string;
   title: string;
   thumbnail_url: string | null;
+  video_url: string | null;
   cook_time: string | null;
   cost_estimate: string | null;
   like_count: number;
@@ -21,6 +22,36 @@ type Recipe = {
   creator?: { display_name: string | null; username: string | null; avatar_url: string | null };
   verified?: boolean;
   country?: string | null;
+};
+
+const FeedVideo = ({ src, poster, title }: { src: string; poster?: string; title: string }) => {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.5) el.play().catch(() => {});
+        else el.pause();
+      },
+      { threshold: [0, 0.5, 1] }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <video
+      ref={ref}
+      src={src}
+      poster={poster}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      aria-label={title}
+      className="w-full h-full object-cover"
+    />
+  );
 };
 
 const HomeFeed = () => {
