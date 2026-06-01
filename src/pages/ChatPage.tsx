@@ -84,10 +84,17 @@ const ChatPage = () => {
     if (!content) return;
     setSending(true);
     setText("");
-    const { error } = await supabase.from("messages").insert({ sender_id: user.id, recipient_id: otherId, content });
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({ sender_id: user.id, recipient_id: otherId, content })
+      .select("*")
+      .single();
     if (error) {
       toast.error(error.message);
       setText(content);
+    } else if (data) {
+      const m = data as Msg;
+      setMessages((prev) => (prev.find((x) => x.id === m.id) ? prev : [...prev, m]));
     }
     setSending(false);
   };
