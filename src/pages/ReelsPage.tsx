@@ -242,7 +242,15 @@ const ReelsPage = () => {
                   loop
                   muted={muted}
                   playsInline
-                  onClick={() => setPaused((p) => ({ ...p, [r.id]: !p[r.id] }))}
+                  onClick={() => {
+                    if (muted) {
+                      setMuted(false);
+                      const v = videoRefs.current.get(r.id);
+                      if (v) { v.muted = false; v.play().catch(() => {}); }
+                      return;
+                    }
+                    setPaused((p) => ({ ...p, [r.id]: !p[r.id] }));
+                  }}
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               ) : r.thumbnail_url ? (
