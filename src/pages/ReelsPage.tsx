@@ -32,7 +32,7 @@ const PAGE = 5;
 
 const ReelsPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [params] = useSearchParams();
   const startId = params.get("id");
 
@@ -158,6 +158,7 @@ const ReelsPage = () => {
   }, [activeIdx, reels, paused]);
 
   const toggleLike = async (r: Reel) => {
+    if (authLoading) return;
     if (!user) return navigate("/auth");
     const liked = likedSet.has(r.id);
     setLikedSet((p) => {
@@ -179,6 +180,7 @@ const ReelsPage = () => {
   };
 
   const toggleSave = async (r: Reel) => {
+    if (authLoading) return;
     if (!user) return navigate("/auth");
     const saved = savedSet.has(r.id);
     setSavedSet((p) => {
@@ -214,7 +216,16 @@ const ReelsPage = () => {
         <ArrowLeft className="w-5 h-5 text-primary-foreground" />
       </button>
       <button
-        onClick={() => setMuted((m) => !m)}
+        onClick={() => {
+          setMuted((m) => {
+            const nm = !m;
+            videoRefs.current.forEach((v) => { v.muted = nm; });
+            const activeId = reels[activeIdx]?.id;
+            const av = activeId ? videoRefs.current.get(activeId) : null;
+            if (av && !nm) av.play().catch(() => {});
+            return nm;
+          });
+        }}
         className="absolute top-12 right-4 z-30 w-10 h-10 rounded-full bg-foreground/30 backdrop-blur-md flex items-center justify-center"
         aria-label={muted ? "Unmute" : "Mute"}
       >
