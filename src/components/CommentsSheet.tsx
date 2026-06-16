@@ -30,7 +30,7 @@ const timeAgo = (iso: string) => {
 };
 
 const CommentsSheet = ({ recipeId, onClose, onCountChange }: Props) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [text, setText] = useState("");
@@ -102,6 +102,7 @@ const CommentsSheet = ({ recipeId, onClose, onCountChange }: Props) => {
   }, [recipeId]);
 
   const send = async () => {
+    if (authLoading) return;
     if (!user) {
       navigate("/auth");
       return;
