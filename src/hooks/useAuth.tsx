@@ -55,6 +55,7 @@ export const useAuth = () => {
         data: { display_name: displayName, role },
       },
     });
+    console.log("signup result", { data, error });
     return { data, error };
   };
 
