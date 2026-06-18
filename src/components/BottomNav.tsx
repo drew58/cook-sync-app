@@ -24,27 +24,16 @@ const BottomNav = () => {
       <div className="flex items-center justify-around max-w-lg mx-auto py-2 px-1">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path || (tab.path === "/reels" && location.pathname.startsWith("/reels"));
-          const isCreate = tab.label === "Create";
           return (
             <button
               key={tab.label}
               onClick={() => navigate(tab.path)}
               className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all duration-200 ${
-                isCreate
-                  ? "relative -mt-4"
-                  : isActive
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {isCreate ? (
-                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-                  <tab.icon className="w-6 h-6 text-primary-foreground" />
-                </div>
-              ) : (
-                <tab.icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : ""}`} />
-              )}
-              <span className={`text-[10px] ${isCreate ? "mt-0.5" : ""} ${isActive ? "font-semibold" : "font-medium"}`}>
+              <tab.icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : ""}`} />
+              <span className={`text-[10px] ${isActive ? "font-semibold" : "font-medium"}`}>
                 {tab.label}
               </span>
             </button>

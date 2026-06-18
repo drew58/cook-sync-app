@@ -207,7 +207,7 @@ const SearchPage = () => {
               </motion.div>
             )}
           </AnimatePresence>
-          <div className="grid grid-cols-2 gap-1 mb-4">
+          <div className="grid grid-cols-2 gap-1 mb-3">
             {filteredIngredients.slice(0, 20).map((ing) => (
               <label key={ing} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-secondary/50 cursor-pointer">
                 <Checkbox checked={selectedIngredients.includes(ing)} onCheckedChange={() => toggleIngredient(ing)} />
@@ -215,6 +215,26 @@ const SearchPage = () => {
               </label>
             ))}
           </div>
+
+          {/* Explicit action so the flow never feels stuck */}
+          <button
+            onClick={runDbSearch}
+            disabled={selectedIngredients.length === 0 || loading}
+            className="w-full mb-5 py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/25 active:scale-[0.98] transition-transform disabled:opacity-40"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            {selectedIngredients.length === 0
+              ? "Select ingredients to find recipes"
+              : `Find recipes with ${selectedIngredients.length} ingredient${selectedIngredients.length > 1 ? "s" : ""}`}
+          </button>
+
+          {selectedIngredients.length > 0 && !loading && (
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-foreground">
+                {sorted.length > 0 ? `${sorted.length} recipe${sorted.length > 1 ? "s" : ""} found` : "No matches yet"}
+              </h2>
+            </div>
+          )}
         </>
       )}
 
