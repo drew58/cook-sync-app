@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Clock, DollarSign, ChefHat, Sparkles, X, Loader2, Filter } from "lucide-react";
+import { Search, Clock, DollarSign, ChefHat, X, Loader2, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +33,6 @@ interface RecipeRow {
   creator_id: string;
   creator_name?: string;
   match?: number;
-  source: "db" | "ai";
 }
 
 const parseNum = (s: string | null | undefined) => {
@@ -52,7 +51,6 @@ const SearchPage = () => {
   const [ingredientSearch, setIngredientSearch] = useState("");
   const [results, setResults] = useState<RecipeRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
 
   const filteredIngredients = popularIngredients.filter((i) =>
     i.toLowerCase().includes(ingredientSearch.toLowerCase())
@@ -70,7 +68,7 @@ const SearchPage = () => {
       .select("user_id, display_name, username")
       .in("user_id", ids);
     const map = new Map((profiles ?? []).map((p) => [p.user_id, p.display_name || p.username || "Chef"]));
-    return rows.map((r) => ({ ...r, creator_name: map.get(r.creator_id) ?? "Chef", source: "db" as const }));
+    return rows.map((r) => ({ ...r, creator_name: map.get(r.creator_id) ?? "Chef" }));
   };
 
   const runDbSearch = async () => {
@@ -99,46 +97,10 @@ const SearchPage = () => {
         });
       }
       setResults(hydrated);
-
-      // AI fallback if too few results
-      if (hydrated.length < 3 && (query.trim() || selectedIngredients.length)) {
-        runAiSearch(hydrated);
-      }
     } catch (e: any) {
       toast.error(e.message ?? "Search failed");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const runAiSearch = async (existing: RecipeRow[] = []) => {
-    setAiLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("ai-recipe-search", {
-        body: mode === "ingredients"
-          ? { ingredients: selectedIngredients }
-          : { query: query || activeCategory },
-      });
-      if (error) throw error;
-      const aiRecipes: RecipeRow[] = (data?.recipes ?? []).map((r: any, i: number) => ({
-        id: `ai-${i}-${Date.now()}`,
-        title: r.title,
-        description: r.description ?? r.cuisine,
-        thumbnail_url: null,
-        cook_time: `${r.cook_time_minutes} min`,
-        cost_estimate: `$${r.cost_usd}`,
-        ingredients: r.ingredients ?? [],
-        tags: [r.cuisine].filter(Boolean),
-        creator_id: "",
-        creator_name: r.creator,
-        match: r.match_percent,
-        source: "ai" as const,
-      }));
-      setResults([...existing, ...aiRecipes]);
-    } catch (e: any) {
-      toast.error("AI search unavailable");
-    } finally {
-      setAiLoading(false);
     }
   };
 
@@ -182,7 +144,7 @@ const SearchPage = () => {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search any dish from anywhere in the world..."
+            placeholder="Search recipes by name or description..."
             className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
@@ -269,7 +231,7 @@ const SearchPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: Math.min(i, 8) * 0.04 }}
             className="glass-card p-3 flex gap-3 cursor-pointer active:scale-[0.98] transition-transform"
-            onClick={() => r.source === "db" ? navigate(`/recipe/${r.id}`) : toast.info("AI suggestion — preview only")}
+            onClick={() => navigate(`/recipe/${r.id}`)}
           >
             <div className="relative flex-shrink-0">
               <img
@@ -280,11 +242,6 @@ const SearchPage = () => {
               />
               {r.match != null && (
                 <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full">{r.match}%</span>
-              )}
-              {r.source === "ai" && (
-                <span className="absolute -bottom-1 -left-1 bg-foreground text-background text-[8px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                  <Sparkles className="w-2.5 h-2.5" />AI
-                </span>
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -300,21 +257,9 @@ const SearchPage = () => {
         ))}
       </div>
 
-      {/* Always-available AI button */}
-      {(query.trim() || selectedIngredients.length > 0) && (
-        <button
-          onClick={() => runAiSearch(results)}
-          disabled={aiLoading}
-          className="mt-4 w-full py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/25 active:scale-[0.98] transition-transform disabled:opacity-60"
-        >
-          {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          {aiLoading ? "Generating ideas..." : "Get AI recipe ideas"}
-        </button>
-      )}
-
       {!loading && sorted.length === 0 && (
         <div className="text-center py-12 text-muted-foreground text-sm">
-          No recipes yet — try the AI button above to discover ideas.
+          No recipes match your search yet.
         </div>
       )}
     </div>
